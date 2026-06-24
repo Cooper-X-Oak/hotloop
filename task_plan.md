@@ -31,8 +31,8 @@ All phases through Phase 16 complete for the routed agent cockpit IA foundation.
 - [x] Phase 16: Agent cockpit IA with app shell, routes, feature pages, and API client
 - [ ] Phase 17: Agent runtime contract with sessions, messages, commands, events, decisions, and tool invocation logs
 - [ ] Phase 18: Agent Console UI with transcript, command composer, decision queue, and tool timeline
-- [ ] Phase 19: Manual agent bridge that routes cockpit commands through durable agent sessions
-- [ ] Phase 20: External agent bridge for local CLI agent execution
+- [ ] Phase 19: Local CLI agent bridge as the primary executor path
+- [ ] Phase 20: API fallback bridge used only when local CLI execution is unavailable
 - [ ] Phase 21: Agent-callable CDP collection tool with silent background browser policy
 
 ## Implementation Strategy
@@ -106,3 +106,4 @@ These commands must exist before implementation is considered complete.
 | Missing demo runtime caused RED test failure | Phase 15 RED | Added `packages/demo`, demo server entry, Vite proxy, and `npm run dev:demo` |
 | Missing routed agent cockpit shell and API client caused RED test failure | Phase 16 RED | Added React Router app shell, feature pages, and shared API client |
 | Missing explicit agent runtime and interaction architecture | Phase 17 design | Added `docs/agent-runtime.md` and updated architecture, state, IA, and roadmap docs |
+| Agent bridge priority was underspecified | Phase 17 correction | Set local CLI bridge as primary path and API bridge as fallback only |

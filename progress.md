@@ -109,4 +109,8 @@
 - Designed the missing agent interaction architecture:
   - added explicit Agent Runtime Boundary
   - defined sessions, messages, commands, events, decisions, tool invocations, and harness checkpoints
-  - extended roadmap/task plan through Phase 21 for agent runtime, Agent Console, manual bridge, external bridge, and CDP tool integration
+  - extended roadmap/task plan through Phase 21 for agent runtime, Agent Console, local CLI bridge, API fallback bridge, and CDP tool integration
+- Corrected bridge priority:
+  - local CLI agent bridge is the primary executor path
+  - API execution is fallback only when CLI is unavailable
+  - sessions must record adapter selection and fallback reason

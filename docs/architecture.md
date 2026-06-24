@@ -117,7 +117,8 @@ Human
   -> /agent UI
   -> Agent Session API
   -> Agent Runtime Boundary
-  -> external agent executor
+  -> local CLI agent executor
+  -> API fallback only if CLI is unavailable
   -> HotLoop tool registry
   -> durable run ledger and workspace artifacts
 ```
@@ -134,6 +135,7 @@ AgentEvent
 ToolInvocation
 HumanDecision
 HarnessContext
+AgentAdapterSelection
 ```
 
 Required UI surfaces:
@@ -163,6 +165,8 @@ POST /api/agent/sessions/:id/decisions/:decisionId/answer
 ```
 
 The existing direct workflow APIs can remain for demo and tool-level testing, but real cockpit operation should route through an agent session so actions are explainable and resumable.
+
+Agent execution must prefer a local CLI bridge. API-based model execution is a fallback path and must be recorded as such in session metadata and events.
 
 ## Storage Policy
 

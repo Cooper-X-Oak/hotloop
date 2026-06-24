@@ -54,7 +54,8 @@ Agent Runtime Boundary
   |
   v
 External Agent Executor
-  |-- Codex / Claude / local CLI agent
+  |-- local CLI agent first: Codex / Claude / other local agent CLIs
+  |-- model API fallback only when local CLI is unavailable
   |-- Reads harness and workspace context
   |-- Calls HotLoop tools through local contracts
   |
@@ -80,12 +81,15 @@ HotLoop should expose a boundary that an agent can use, but it should not hide t
 - Persist agent events, tool calls, checkpoints, and human decisions.
 - Load workspace policy, AGENTS files, skills, loop definitions, and module manifests.
 - Start or connect to an external agent process through an adapter.
+- Prefer local CLI agent adapters as the primary execution bridge.
+- Use model/provider API adapters only as fallback when local CLI execution is unavailable.
 - Expose HotLoop tools through typed local contracts.
 - Let the UI show what the agent is doing and where it is blocked.
 
 ### Out of Scope
 
 - Replacing the external agent with a hidden backend planner.
+- Making model API calls the primary agent path when a local CLI bridge is available.
 - Making source discovery depend on opaque agent search.
 - Auto-publishing or bypassing human review.
 - Hiding tool calls or browser collection behind uninspectable summaries.
@@ -102,7 +106,7 @@ A durable conversation and execution envelope.
   "status": "running",
   "workspaceRoot": "D:/path/to/content-vault",
   "activeRunId": "ui-scan-123",
-  "agentAdapter": "codex-cli",
+  "agentAdapter": "local-cli:codex",
   "loadedHarness": [
     "AGENTS.md",
     "loops/hotspot-writing-loop.yaml",
@@ -281,6 +285,16 @@ The first implementation can use polling from the UI. Server-sent events are use
 
 The Agent Bridge adapts HotLoop to whichever agent executor is being used.
 
+The bridge priority is:
+
+```text
+1. local CLI bridge
+2. model/provider API fallback
+3. manual diagnostic bridge for development only
+```
+
+Local CLI is the product-default path because it preserves the current agent-native workflow: local workspace, local harness, local tools, local browser/CDP access, and visible process logs. API fallback is useful for environments where a CLI is missing or broken, but it should not become the main execution model.
+
 ```text
 AgentBridge
   createSession(input)
@@ -303,13 +317,48 @@ claude-cli
   Starts or connects to a Claude CLI process.
   Uses the same session/event/tool contracts.
 
+api-fallback
+  Calls a model/provider API when local CLI execution is unavailable.
+  Must use the same harness-context checkpoint, command queue, event sink, and tool registry.
+  Must be marked as fallback in session metadata.
+
 manual-agent
   Does not spawn a model.
   Lets the current human-agent conversation use HotLoop as a durable tool panel.
-  Useful before process automation is reliable.
+  Useful only for development diagnostics and emergency human-operated recovery.
 ```
 
-The first adapter should be `manual-agent` or a thin local CLI bridge. Do not start by building a complex autonomous daemon.
+The first production adapter should be a local CLI bridge. Do not start with an API-first backend agent and do not start by building a complex autonomous daemon.
+
+## Adapter Selection
+
+Agent sessions should record how the executor was selected.
+
+```json
+{
+  "agentAdapter": "local-cli:codex",
+  "adapterPriority": ["local-cli:codex", "local-cli:claude", "api-fallback"],
+  "fallbackReason": null
+}
+```
+
+Fallback example:
+
+```json
+{
+  "agentAdapter": "api-fallback",
+  "adapterPriority": ["local-cli:codex", "local-cli:claude", "api-fallback"],
+  "fallbackReason": "local CLI executable not found"
+}
+```
+
+Rules:
+
+- Try the configured local CLI bridge first.
+- If the CLI is unavailable, record the failure as an agent event.
+- Only then select `api-fallback`.
+- Never silently switch from CLI to API without recording `fallbackReason`.
+- The UI must show when a session is using API fallback.
 
 ## Harness Loader
 
@@ -496,22 +545,25 @@ The UI should show when CDP is being used and which source is being collected.
 - Add API client methods for agent endpoints.
 - Keep existing feature pages unchanged.
 
-### Phase 19: Manual Agent Bridge
+### Phase 19: Local CLI Agent Bridge
 
-- Add a `manual-agent` adapter that lets the current human-agent conversation drive tools through the cockpit.
-- Prove the interaction model without spawning a separate autonomous process.
-- Route the real scan command through an agent session in manual mode.
-
-### Phase 20: External Agent Bridge
-
-- Add a thin adapter for a local CLI agent.
+- Add the first local CLI bridge adapter.
+- Start or connect to a configured local CLI agent.
+- Inject harness-context checkpoint and command text.
 - Persist stdout/stderr logs.
-- Convert process lifecycle events into session events.
-- Keep all tool calls inside HotLoop's typed tool registry.
+- Convert process lifecycle into session events.
+- Route the real scan command through an agent session using the local CLI bridge.
+
+### Phase 20: API Fallback Bridge
+
+- Add a model/provider API fallback adapter.
+- Reuse the same session, command, event, decision, and tool contracts.
+- Record fallback reason in session metadata.
+- Show fallback status in the Agent Console.
+- Keep API fallback behind local CLI selection failure.
 
 ### Phase 21: CDP Tool Integration
 
 - Add `radar.collect_with_cdp` as an agent-callable tool.
 - Enforce background-only browser behavior.
 - Record CDP source snapshots and tool events.
-

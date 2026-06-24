@@ -131,30 +131,33 @@ Deliverables:
 - decision queue
 - active run summary
 
-## Phase 19: Manual Agent Bridge
+## Phase 19: Local CLI Agent Bridge
 
-Goal: prove agent interaction without hiding execution inside an autonomous backend.
-
-Deliverables:
-
-- `manual-agent` adapter
-- command-to-tool mapping
-- scan command routed through an agent session
-- durable events for every manual tool action
-- resume manifest for the current agent conversation
-
-## Phase 20: External Agent Bridge
-
-Goal: connect a local CLI agent while preserving HotLoop as the cockpit and toolroom.
+Goal: bridge HotLoop into a local CLI agent as the primary executor path.
 
 Deliverables:
 
 - local CLI bridge contract
-- process lifecycle events
-- stdout/stderr logs
-- command injection through harness context
+- configured CLI adapter selection
+- harness-context injection
+- command-to-tool mapping
+- scan command routed through an agent session
+- durable process lifecycle events
+- stdout/stderr session logs
 - cancellation boundary
 - bridge tests with a fake process adapter
+
+## Phase 20: API Fallback Bridge
+
+Goal: provide API fallback only when the local CLI bridge is unavailable.
+
+Deliverables:
+
+- model/provider API fallback adapter
+- fallback reason recorded in session metadata
+- fallback events visible in the Agent Console
+- same command, decision, event, and tool contracts as the CLI bridge
+- tests proving CLI is tried before API fallback
 
 ## Phase 21: CDP Tool Integration
 

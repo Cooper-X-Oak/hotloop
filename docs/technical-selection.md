@@ -118,11 +118,12 @@ Managed browser-agent tools such as Stagehand or Browser Use can be evaluated la
 First version:
 
 ```text
-existing GPT/Codex-style agent + local harness + durable HotLoop agent sessions + typed tools
+existing local CLI agent + local harness + durable HotLoop agent sessions + typed tools
 ```
 
 Later candidates:
 
+- provider/model API fallback
 - OpenAI Agents SDK
 - Vercel Eve
 - Mastra
@@ -132,7 +133,7 @@ Rationale:
 
 The current repo already has a strong AI-native harness. The first cockpit shell should make the agent durable, observable, steerable, and resumable before replacing the runtime.
 
-The first implementation should prefer a `manual-agent` or thin local CLI bridge over a heavy agent framework. HotLoop should expose sessions, commands, tool calls, and human decision checkpoints; it should not hide execution inside an autonomous backend planner.
+The first implementation should bridge into a local CLI agent. API execution is a fallback for environments where the local CLI is unavailable, not the default path. HotLoop should expose sessions, commands, tool calls, and human decision checkpoints; it should not hide execution inside an autonomous backend planner.
 
 ## Rejected for MVP
 

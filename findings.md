@@ -170,3 +170,4 @@
   - harness context checkpoints
 - The `/agent` surface should become the front door for instructing and steering the agent.
 - Existing workflow APIs should remain tool-level capabilities, but real cockpit operation should route through durable agent sessions.
+- Agent execution should bridge into local CLI first. API execution is fallback only and must record fallback reason.
