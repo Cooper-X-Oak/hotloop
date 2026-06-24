@@ -1,14 +1,14 @@
-# Task Plan: HotLoop Phase 1 to Phase 16
+# Task Plan: HotLoop Phase 1 to Phase 21
 
 ## Goal
 
-Build HotLoop from the current Phase 0 product guardrails into a runnable local-first agent cockpit and toolroom through Phase 16.
+Build HotLoop from the current Phase 0 product guardrails into a runnable local-first agent cockpit and toolroom through Phase 21.
 
 Phase 0-8 established the minimal cockpit skeleton. Phase 9-14 should connect the skeleton into a usable local agent operation path without violating the core boundaries: content vault remains external, runs are durable, modules are filesystem-based, browser/source collection is explicit, the agent remains the executor, and publishing remains draft-only.
 
 ## Current Phase
 
-All phases through Phase 16 complete for the routed agent cockpit IA foundation.
+All phases through Phase 16 complete for the routed agent cockpit IA foundation. Phase 17 is the next phase and should add the explicit agent runtime and interaction contract.
 
 ## Phase Checklist
 
@@ -29,6 +29,11 @@ All phases through Phase 16 complete for the routed agent cockpit IA foundation.
 - [x] Phase 14: Agent cockpit views for radar, runs, artifacts, publish, and feedback
 - [x] Phase 15: Local demo runtime and one-command operation page
 - [x] Phase 16: Agent cockpit IA with app shell, routes, feature pages, and API client
+- [ ] Phase 17: Agent runtime contract with sessions, messages, commands, events, decisions, and tool invocation logs
+- [ ] Phase 18: Agent Console UI with transcript, command composer, decision queue, and tool timeline
+- [ ] Phase 19: Manual agent bridge that routes cockpit commands through durable agent sessions
+- [ ] Phase 20: External agent bridge for local CLI agent execution
+- [ ] Phase 21: Agent-callable CDP collection tool with silent background browser policy
 
 ## Implementation Strategy
 
@@ -53,6 +58,7 @@ All phases through Phase 16 complete for the routed agent cockpit IA foundation.
 - `packages/smoke`: workspace smoke test helpers
 - `packages/loop`: durable hotspot loop runner
 - `packages/demo`: local demo workspace/runtime preparation
+- `packages/agent`: agent session store, command queue, event log, decision queue, harness loader, and bridge contracts
 
 ## Planned Apps
 
@@ -99,3 +105,4 @@ These commands must exist before implementation is considered complete.
 | Missing durable loop runner caused RED test failure | Phase 10 runner RED | Added `packages/loop` and `/api/loops/hotspot/scan` |
 | Missing demo runtime caused RED test failure | Phase 15 RED | Added `packages/demo`, demo server entry, Vite proxy, and `npm run dev:demo` |
 | Missing routed agent cockpit shell and API client caused RED test failure | Phase 16 RED | Added React Router app shell, feature pages, and shared API client |
+| Missing explicit agent runtime and interaction architecture | Phase 17 design | Added `docs/agent-runtime.md` and updated architecture, state, IA, and roadmap docs |

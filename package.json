@@ -2,7 +2,7 @@
   "name": "hotloop",
   "version": "0.0.0",
   "private": false,
-  "description": "Local-first agentic content workspace for high-velocity AI and technology publishing.",
+  "description": "Local-first agent cockpit and toolroom for high-velocity AI and technology publishing.",
   "type": "module",
   "scripts": {
     "test": "vitest run",

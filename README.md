@@ -59,10 +59,11 @@ This repository starts as an agent cockpit shell. The existing content vault rem
 - [Product Shape](docs/product-shape.md): product identity, principles, pages, and non-goals.
 - [Information Architecture](docs/information-architecture.md): how radar, topics, evidence, articles, artifacts, and publishing fit together.
 - [Architecture](docs/architecture.md): local-first workspace architecture and package boundaries.
+- [Agent Runtime](docs/agent-runtime.md): agent sessions, commands, messages, decisions, tool calls, and bridge boundary.
 - [Domain Model](docs/domain-model.md): core objects and lifecycle.
 - [State and Loop](docs/state-and-loop.md): durable run ledger, loop flow, and resume model.
 - [Module System](docs/module-system.md): pluggable radar/evidence/writing/media/render/publisher modules.
 - [Technical Selection](docs/technical-selection.md): technology choices and rejected alternatives.
-- [Roadmap](docs/roadmap.md): staged path from product shell to usable local workspace.
+- [Roadmap](docs/roadmap.md): staged path from cockpit shell to agent-interactive toolroom.
 - [Hotspot Writing Loop](loops/hotspot-writing-loop.yaml): first durable loop definition.
 - [Module Manifest Example](modules/module.example.yaml): starting contract for pluggable modules.

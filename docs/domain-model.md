@@ -13,6 +13,60 @@ Fields:
 - `hotspotRoot`
 - `scratchRoot`
 
+### AgentSession
+
+A durable interaction envelope for one human-agent working thread.
+
+It owns:
+
+- message log
+- command queue
+- agent event log
+- tool invocation log
+- human decision queue
+- harness context checkpoints
+- optional active run reference
+
+### AgentMessage
+
+A human, agent, system, or tool message in an agent session.
+
+Messages preserve the visible conversation, but they are not the only source of state. Commands, decisions, tool invocations, runs, checkpoints, and artifacts are also first-class state.
+
+### AgentCommand
+
+A structured instruction from the cockpit to the agent runtime.
+
+Examples:
+
+- run hotspot loop
+- continue current run
+- resume failed run
+- collect source
+- explain candidate
+- render artifact
+- create platform draft
+
+### ToolInvocation
+
+A visible record of an agent-callable tool execution.
+
+It records:
+
+- tool name
+- status
+- input checkpoint reference
+- output checkpoint reference
+- run reference
+- timing
+- error details when failed
+
+### HumanDecision
+
+A durable stop point where the agent needs human judgment.
+
+The agent should set a session or run to `waiting_for_user` and expose the question, recommended answer, options, and evidence instead of burying the question in a transient chat message.
+
 ### Source
 
 A registered origin of information.
@@ -95,6 +149,7 @@ Runs own:
 
 ```text
 Source
+  -> AgentSession
   -> Candidate
   -> Topic
   -> EvidencePack
@@ -111,8 +166,8 @@ Long-term content:
 
 Recoverable runtime state:
   scratch run ledger
+  scratch agent session ledger
 
 Query acceleration:
   optional future SQLite index
 ```
-

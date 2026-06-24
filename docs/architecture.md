@@ -10,7 +10,9 @@ The agent remains the executor. HotLoop operates on an external content vault as
 
 ```text
 Agent Cockpit UI
+  -> Agent Interaction Layer
   -> Local API
+  -> Agent Runtime Boundary
   -> Domain Services
   -> Job Runner
   -> Module Registry / Adapters
@@ -38,6 +40,12 @@ Agent Cockpit UI
 
 6. Frontend Agent Console
    Radar, topic, article, artifact, and publish views.
+
+7. Agent Runtime Boundary
+   Agent sessions, messages, commands, tool invocations, human decisions, and bridge adapters.
+
+8. Agent Interaction Surface
+   Chat-style instruction input, structured quick commands, decision queue, tool timeline, and active run inspector.
 ```
 
 ## Repository Boundary
@@ -83,6 +91,9 @@ packages/modules
 packages/runner
   Durable run ledger, job execution, logs, checkpoints, and resume support.
 
+packages/agent
+  Agent session store, command queue, event log, decision queue, harness loader, and bridge contracts.
+
 packages/adapters
   Wrappers around existing scripts and external systems.
 ```
@@ -96,6 +107,62 @@ apps/server
 apps/web
   Local agent operations console.
 ```
+
+## Agent Runtime Boundary
+
+HotLoop does not become the agent. It gives the agent a durable cockpit.
+
+```text
+Human
+  -> /agent UI
+  -> Agent Session API
+  -> Agent Runtime Boundary
+  -> external agent executor
+  -> HotLoop tool registry
+  -> durable run ledger and workspace artifacts
+```
+
+The boundary is defined in [Agent Runtime and Interaction Architecture](agent-runtime.md).
+
+Required runtime objects:
+
+```text
+AgentSession
+AgentMessage
+AgentCommand
+AgentEvent
+ToolInvocation
+HumanDecision
+HarnessContext
+```
+
+Required UI surfaces:
+
+```text
+/agent
+  session selector
+  human message composer
+  structured command buttons
+  agent transcript
+  tool activity timeline
+  human decision queue
+  active run summary
+```
+
+Required API families:
+
+```text
+GET  /api/agent/sessions
+POST /api/agent/sessions
+GET  /api/agent/sessions/:id/messages
+POST /api/agent/sessions/:id/messages
+POST /api/agent/sessions/:id/commands
+GET  /api/agent/sessions/:id/events
+GET  /api/agent/sessions/:id/decisions
+POST /api/agent/sessions/:id/decisions/:decisionId/answer
+```
+
+The existing direct workflow APIs can remain for demo and tool-level testing, but real cockpit operation should route through an agent session so actions are explainable and resumable.
 
 ## Storage Policy
 
@@ -148,4 +215,16 @@ GET  /api/runs
 GET  /api/runs/:id
 GET  /api/runs/:id/events
 POST /api/runs/:id/resume
+
+GET  /api/agent/sessions
+POST /api/agent/sessions
+GET  /api/agent/sessions/:id
+GET  /api/agent/sessions/:id/messages
+POST /api/agent/sessions/:id/messages
+GET  /api/agent/sessions/:id/events
+POST /api/agent/sessions/:id/commands
+GET  /api/agent/sessions/:id/commands
+GET  /api/agent/sessions/:id/decisions
+POST /api/agent/sessions/:id/decisions/:decisionId/answer
+POST /api/agent/sessions/:id/cancel
 ```

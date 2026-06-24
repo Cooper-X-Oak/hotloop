@@ -16,16 +16,51 @@ The agent remains the orchestrator. The product records what happened, what exis
 
 ```text
 user intent
+  -> create agent session
+  -> append human message
+  -> enqueue agent command
   -> create run
   -> load workspace manifest
   -> load harness and policies
   -> load modules
-  -> execute loop steps
+  -> agent executes loop steps through tools
   -> append events
   -> write checkpoints
   -> register artifacts
+  -> ask human for decisions when needed
   -> resume or complete
 ```
+
+## Agent Session State
+
+Agent interaction state is durable runtime state, not React state and not model memory.
+
+```text
+.scratch/hotloop/agent-sessions/<session-id>/
+  session.json
+  messages.jsonl
+  commands.jsonl
+  events.jsonl
+  decisions.jsonl
+  tool-invocations.jsonl
+  checkpoints/
+    harness-context.json
+  logs/
+    agent.stdout.log
+    agent.stderr.log
+```
+
+The session points to an active run when a command becomes executable:
+
+```text
+AgentSession
+  -> AgentCommand
+  -> RunRecord
+  -> ToolInvocation
+  -> Checkpoint / Artifact
+```
+
+The run ledger records workflow progress. The session ledger records agent-human interaction and tool use.
 
 ## Durable Run Shape
 
@@ -134,6 +169,8 @@ Resume should be mechanical:
 
 The UI should allow:
 
+- talk to the agent
+- issue structured commands
 - continue
 - pause
 - retry current step
@@ -141,5 +178,6 @@ The UI should allow:
 - add source/module
 - mark candidate ignored
 - ask agent to explain selection
+- answer agent decision requests
+- inspect agent tool calls
 - create draft after review
-

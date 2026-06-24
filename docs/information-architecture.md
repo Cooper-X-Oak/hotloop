@@ -4,6 +4,7 @@
 
 ```text
 Workspace
+  -> Agent Sessions
   -> Sources
   -> Candidates
   -> Topics
@@ -13,10 +14,18 @@ Workspace
   -> Publish Jobs
 ```
 
-## Product IA
+## Cockpit IA
 
 ```text
 HotLoop
+|
+|-- Agent
+|   |-- sessions
+|   |-- transcript
+|   |-- command queue
+|   |-- tool activity
+|   |-- human decision queue
+|   `-- active run summary
 |
 |-- Radar
 |   |-- P0 X explosive posts
@@ -82,6 +91,32 @@ P4: papers, capped and only if relevant to product or developer impact
 ```
 
 ## Core Screens
+
+### Agent Console
+
+Purpose: talk to the agent executor and watch it use the HotLoop toolroom.
+
+Primary objects:
+
+- AgentSession
+- AgentMessage
+- AgentCommand
+- ToolInvocation
+- HumanDecision
+- Run
+
+Primary actions:
+
+- create session
+- send instruction
+- run hotspot loop
+- continue current run
+- resume failed run
+- answer decision
+- cancel session
+- inspect tool call
+
+This screen is the front door for agent interaction. The other screens remain object-specific work surfaces.
 
 ### Hotspot Radar
 
@@ -170,4 +205,3 @@ Primary actions:
 - upload images
 - create draft
 - record result
-

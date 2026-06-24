@@ -156,3 +156,17 @@
 - Routes now cover `/radar`, `/topics`, `/evidence`, `/runs`, `/artifacts`, `/publish`, and `/feedback`.
 - `react-router-dom` is declared as a direct dependency of `@hotloop/web`.
 - Current full verification after Phase 16: 20 test files, 49 tests, typecheck, and all workspace builds pass.
+
+## Phase 17 Direction
+
+- The previous architecture still implied the agent externally, but did not model agent interaction.
+- Phase 17 should add an explicit Agent Runtime Boundary:
+  - agent sessions
+  - human and agent messages
+  - structured commands
+  - agent events
+  - tool invocation logs
+  - human decision queue
+  - harness context checkpoints
+- The `/agent` surface should become the front door for instructing and steering the agent.
+- Existing workflow APIs should remain tool-level capabilities, but real cockpit operation should route through durable agent sessions.

@@ -106,3 +106,7 @@
 - Corrected product framing:
   - HotLoop is an agent cockpit/toolroom, not an independent standalone product
   - future work should keep the agent as executor and prioritize agent runtime, CDP, and tool integration
+- Designed the missing agent interaction architecture:
+  - added explicit Agent Runtime Boundary
+  - defined sessions, messages, commands, events, decisions, tool invocations, and harness checkpoints
+  - extended roadmap/task plan through Phase 21 for agent runtime, Agent Console, manual bridge, external bridge, and CDP tool integration

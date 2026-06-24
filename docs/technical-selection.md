@@ -20,7 +20,7 @@ workspace
 Selected pattern:
 
 ```text
-filesystem-first agentic workspace
+filesystem-first agent cockpit and toolroom
 ```
 
 Reference ideas:
@@ -113,12 +113,12 @@ Rationale:
 
 Managed browser-agent tools such as Stagehand or Browser Use can be evaluated later, but should not replace deterministic local CDP collection in the first version.
 
-### Agent Runtime
+### Agent Runtime and Interaction
 
 First version:
 
 ```text
-existing GPT/Codex-style agent + local harness + tools
+existing GPT/Codex-style agent + local harness + durable HotLoop agent sessions + typed tools
 ```
 
 Later candidates:
@@ -130,7 +130,9 @@ Later candidates:
 
 Rationale:
 
-The current repo already has a strong AI-native harness. The first product shell should make it durable and observable before replacing the runtime.
+The current repo already has a strong AI-native harness. The first cockpit shell should make the agent durable, observable, steerable, and resumable before replacing the runtime.
+
+The first implementation should prefer a `manual-agent` or thin local CLI bridge over a heavy agent framework. HotLoop should expose sessions, commands, tool calls, and human decision checkpoints; it should not hide execution inside an autonomous backend planner.
 
 ## Rejected for MVP
 
@@ -153,4 +155,3 @@ Rejected as the main discovery path. HotLoop should use direct sources, RSS, API
 ### Auto-publishing
 
 Rejected for the first product. Publishing adapters may create drafts only.
-

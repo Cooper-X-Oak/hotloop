@@ -101,3 +101,69 @@ Deliverables:
 - `draft/add`
 - publish-result record
 
+## Phase 17: Agent Runtime Contract
+
+Goal: make the agent an explicit, durable runtime actor instead of an implied external conversation.
+
+Deliverables:
+
+- agent session model
+- agent message log
+- agent command queue
+- agent event log
+- tool invocation log
+- human decision queue
+- harness context checkpoint
+- agent session API
+
+## Phase 18: Agent Console UI
+
+Goal: give the human a cockpit surface to instruct, inspect, and steer the agent.
+
+Deliverables:
+
+- `/agent` route
+- session selector
+- human message composer
+- structured command buttons
+- transcript
+- tool timeline
+- decision queue
+- active run summary
+
+## Phase 19: Manual Agent Bridge
+
+Goal: prove agent interaction without hiding execution inside an autonomous backend.
+
+Deliverables:
+
+- `manual-agent` adapter
+- command-to-tool mapping
+- scan command routed through an agent session
+- durable events for every manual tool action
+- resume manifest for the current agent conversation
+
+## Phase 20: External Agent Bridge
+
+Goal: connect a local CLI agent while preserving HotLoop as the cockpit and toolroom.
+
+Deliverables:
+
+- local CLI bridge contract
+- process lifecycle events
+- stdout/stderr logs
+- command injection through harness context
+- cancellation boundary
+- bridge tests with a fake process adapter
+
+## Phase 21: CDP Tool Integration
+
+Goal: make browser collection an explicit agent-callable tool.
+
+Deliverables:
+
+- `radar.collect_with_cdp` tool contract
+- background-only CDP adapter
+- source snapshot persistence
+- browser activity events
+- no foreground focus stealing
