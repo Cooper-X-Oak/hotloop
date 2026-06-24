@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { listEnabledModules } from "@hotloop/modules";
 import { createRun, listRuns } from "@hotloop/runner";
 import {
   listCandidates,
@@ -11,6 +12,7 @@ import {
 export interface CreateAppOptions {
   workspaceConfigPath: string;
   runsRoot?: string;
+  modulesRoot?: string;
 }
 
 export function createApp(options: CreateAppOptions) {
@@ -60,6 +62,13 @@ export function createApp(options: CreateAppOptions) {
     const input = await c.req.json();
     const run = await createRun(options.runsRoot, input);
     return c.json(run, 201);
+  });
+
+  app.get("/api/modules", async (c) => {
+    if (!options.modulesRoot) {
+      return c.json({ error: "modulesRoot is not configured" }, 503);
+    }
+    return c.json(await listEnabledModules(options.modulesRoot));
   });
 
   return app;

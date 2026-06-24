@@ -111,4 +111,24 @@ describe("server API", () => {
     expect(runs).toHaveLength(1);
     expect(runs[0].id).toBe("run-api-1");
   });
+
+  it("lists enabled modules", async () => {
+    const fixture = await createFixtureWorkspace();
+    const modulesRoot = await mkdtemp(path.join(tmpdir(), "hotloop-api-modules-"));
+    const moduleRoot = path.join(modulesRoot, "sopilot-x");
+    await mkdir(moduleRoot, { recursive: true });
+    await writeFile(
+      path.join(moduleRoot, "module.yaml"),
+      "id: sopilot-x\ntype: radar\nname: X explosive posts\nversion: 0.1.0\nenabled: true\nlane: P0\n",
+      "utf8"
+    );
+    const app = createApp({ workspaceConfigPath: fixture.configPath, modulesRoot });
+
+    const response = await app.request("/api/modules");
+    const modules = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(modules).toHaveLength(1);
+    expect(modules[0].id).toBe("sopilot-x");
+  });
 });

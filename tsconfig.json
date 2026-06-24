@@ -8,6 +8,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
+    "jsx": "react-jsx",
     "noEmit": true,
     "types": ["node", "vitest/globals"]
   },
@@ -19,4 +20,3 @@
     "vitest.config.ts"
   ]
 }
-

@@ -1,0 +1,14 @@
+{
+  "name": "@hotloop/web",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "vite build"
+  },
+  "dependencies": {
+    "@hotloop/workspace": "0.0.0"
+  },
+  "devDependencies": {}
+}
+

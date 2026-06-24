@@ -23,3 +23,8 @@
   - `artifacts.json`
   - checkpoints
 - `apps/server` now exposes basic run creation and listing.
+- `apps/web` now has a minimal Radar page.
+- P0-P4 lane ordering is tested.
+- P0 is rendered even when empty.
+- `packages/modules` validates filesystem module manifests.
+- `apps/server` exposes enabled module list via `GET /api/modules`.
