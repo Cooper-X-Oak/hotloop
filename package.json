@@ -8,7 +8,10 @@
     "test": "vitest run",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "build": "npm run build --workspaces --if-present",
-    "check": "npm run test && npm run typecheck && npm run build"
+    "check": "npm run test && npm run typecheck && npm run build",
+    "dev:demo": "tsx scripts/dev-demo.ts",
+    "dev:demo:server": "npm --workspace apps/server run dev:demo",
+    "dev:demo:web": "npm --workspace apps/web run dev"
   },
   "workspaces": [
     "apps/*",

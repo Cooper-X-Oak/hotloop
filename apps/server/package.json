@@ -5,10 +5,12 @@
   "private": true,
   "scripts": {
     "build": "tsc -p tsconfig.json --noEmit",
-    "dev": "tsx src/index.ts"
+    "dev": "tsx src/index.ts",
+    "dev:demo": "tsx src/demo.ts"
   },
   "dependencies": {
     "@hotloop/adapters": "0.0.0",
+    "@hotloop/demo": "0.0.0",
     "@hotloop/evidence": "0.0.0",
     "@hotloop/feedback": "0.0.0",
     "@hotloop/loop": "0.0.0",

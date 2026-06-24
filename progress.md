@@ -81,3 +81,12 @@
   - renders Radar, Runs, Artifacts, Publish, and Feedback views
 - Exposed Phase 9-13 workflow APIs through `apps/server`.
 - Verified `npm run check` with 13 test files and 36 tests.
+- Started Phase 15 local demo runtime:
+  - goal is to make the existing operation page testable through one local dev flow
+  - `.scratch/` is confirmed ignored and suitable for generated demo workspace state
+- Completed Phase 15 local demo runtime:
+  - added `packages/demo`
+  - added demo server app and `apps/server` demo entry
+  - added Vite `/api` proxy and web dev script
+  - added root `npm run dev:demo`
+  - verified `npm run check` with 17 test files and 41 tests

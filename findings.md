@@ -75,3 +75,29 @@
   - `POST /api/publish/wechat/draft`
 - `apps/web` now renders a multi-view product console with Radar, Runs, Artifacts, Publish, and Feedback sections.
 - Current full verification after Phase 14: 14 test files, 37 tests, typecheck, and all workspace builds pass.
+
+## Phase 15 Direction
+
+- The product has an operation page, but it needs a local demo runtime so the page can be opened and exercised without hand-wiring every API option.
+- Demo runtime state should live under `.scratch/` and stay out of git.
+- Vite should proxy `/api` to the local Hono server so `apps/web` can be used as the operation page.
+- The server demo entry should configure repo root, runs root, modules root, feedback root, and deterministic demo radar handlers.
+
+## Phase 15 Implemented State
+
+- `packages/demo` prepares a generated local demo workspace under `.scratch/demo`.
+- Demo data seeds P0-P4 candidates and matching source registry entries.
+- `apps/server/src/demo-app.ts` wires the full demo app with:
+  - repo root
+  - runs root
+  - modules root
+  - feedback root
+  - demo radar handlers
+  - draft-only demo WeChat client
+- `apps/server/src/demo.ts` starts the demo Hono server on `127.0.0.1:8787`.
+- `apps/web/vite.config.ts` proxies `/api` to `http://127.0.0.1:8787`.
+- Root scripts now include:
+  - `npm run dev:demo`
+  - `npm run dev:demo:server`
+  - `npm run dev:demo:web`
+- Current full verification after Phase 15: 17 test files, 41 tests, typecheck, and all workspace builds pass.

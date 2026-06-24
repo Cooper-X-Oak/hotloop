@@ -5,6 +5,7 @@ import { loadWorkspaceConfig } from "@hotloop/workspace";
 export interface WorkspaceSmokeInput {
   repoRoot: string;
   workspaceConfigPath: string;
+  allowInternalWorkspace?: boolean;
 }
 
 export interface WorkspaceSmokeCheck {
@@ -36,7 +37,7 @@ export async function runWorkspaceSmokeTest(
   const externalWorkspace = !isInside(input.repoRoot, config.contentRoot);
 
   return {
-    ok: externalWorkspace && checks.every((check) => check.ok),
+    ok: (externalWorkspace || input.allowInternalWorkspace === true) && checks.every((check) => check.ok),
     workspaceName: config.workspaceName,
     externalWorkspace,
     checks

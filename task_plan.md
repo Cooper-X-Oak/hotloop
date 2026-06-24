@@ -1,14 +1,14 @@
-# Task Plan: HotLoop Phase 1 to Phase 14
+# Task Plan: HotLoop Phase 1 to Phase 15
 
 ## Goal
 
-Build HotLoop from the current Phase 0 product guardrails into a runnable local-first agentic content workspace through Phase 14.
+Build HotLoop from the current Phase 0 product guardrails into a runnable local-first agentic content workspace through Phase 15.
 
 Phase 0-8 established the minimal product skeleton. Phase 9-14 should connect the skeleton into a usable local product path without violating the core boundaries: content vault remains external, runs are durable, modules are filesystem-based, browser/source collection is explicit, and publishing remains draft-only.
 
 ## Current Phase
 
-All phases through Phase 14 complete for the runnable local product foundation.
+All phases through Phase 15 complete for the browser-testable local product foundation.
 
 ## Phase Checklist
 
@@ -27,6 +27,7 @@ All phases through Phase 14 complete for the runnable local product foundation.
 - [x] Phase 12: Writer and renderer pipeline foundation
 - [x] Phase 13: WeChat draft integration layer
 - [x] Phase 14: Product UI views for radar, runs, artifacts, publish, and feedback
+- [x] Phase 15: Local demo runtime and one-command operation page
 
 ## Implementation Strategy
 
@@ -50,6 +51,7 @@ All phases through Phase 14 complete for the runnable local product foundation.
 - `packages/render`: markdown-to-HTML renderer for final artifacts
 - `packages/smoke`: workspace smoke test helpers
 - `packages/loop`: durable hotspot loop runner
+- `packages/demo`: local demo workspace/runtime preparation
 
 ## Planned Apps
 
@@ -94,3 +96,4 @@ These commands must exist before implementation is considered complete.
 | Missing product console caused RED test failure | Phase 14 RED | Added `ProductConsole` and multi-view UI |
 | Missing server workflow APIs caused RED test failure | Phase 9-13 API RED | Added smoke, radar run, evidence, render, and WeChat draft routes |
 | Missing durable loop runner caused RED test failure | Phase 10 runner RED | Added `packages/loop` and `/api/loops/hotspot/scan` |
+| Missing demo runtime caused RED test failure | Phase 15 RED | Added `packages/demo`, demo server entry, Vite proxy, and `npm run dev:demo` |

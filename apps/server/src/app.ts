@@ -25,6 +25,7 @@ export interface CreateAppOptions {
   runsRoot?: string;
   modulesRoot?: string;
   feedbackRoot?: string;
+  allowInternalWorkspace?: boolean;
   radarHandlers?: Record<string, RadarModuleHandler>;
   wechatClient?: WeChatApiClient;
 }
@@ -101,7 +102,8 @@ export function createApp(options: CreateAppOptions) {
     return c.json(
       await runWorkspaceSmokeTest({
         repoRoot: options.repoRoot,
-        workspaceConfigPath: options.workspaceConfigPath
+        workspaceConfigPath: options.workspaceConfigPath,
+        allowInternalWorkspace: options.allowInternalWorkspace
       })
     );
   });
