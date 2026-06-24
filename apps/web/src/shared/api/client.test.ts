@@ -36,6 +36,11 @@ describe("HotLoop API client", () => {
       type: "run_loop",
       payload: { freshnessWindowHours: 6 }
     });
+    await api.runAgentCommandWithLocalCli("agent-1", "cmd-1", {
+      executable: "codex",
+      args: ["exec"],
+      cwd: "D:/workspace"
+    });
     await api.answerAgentDecision("agent-1", "decision-1", { answer: "write_p0" });
     await api.recordFeedback({
       topicId: "topic-1",
@@ -53,6 +58,7 @@ describe("HotLoop API client", () => {
       { url: "/api/agent/sessions", method: "POST" },
       { url: "/api/agent/sessions/agent-1/messages", method: "POST" },
       { url: "/api/agent/sessions/agent-1/commands", method: "POST" },
+      { url: "/api/agent/sessions/agent-1/commands/cmd-1/local-cli/run", method: "POST" },
       { url: "/api/agent/sessions/agent-1/decisions/decision-1/answer", method: "POST" },
       { url: "/api/feedback/outcomes", method: "POST" }
     ]);

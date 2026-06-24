@@ -228,6 +228,7 @@ POST /api/agent/sessions/:id/messages
 GET  /api/agent/sessions/:id/events
 POST /api/agent/sessions/:id/commands
 GET  /api/agent/sessions/:id/commands
+POST /api/agent/sessions/:id/commands/:commandId/local-cli/run
 GET  /api/agent/sessions/:id/decisions
 POST /api/agent/sessions/:id/decisions/:decisionId/answer
 POST /api/agent/sessions/:id/cancel

@@ -124,3 +124,10 @@
   - added instruction composer, session list, transcript, command queue, and decision queue
   - added frontend API client methods for agent session interactions
   - verified `npm run check` with 21 test files and 53 tests
+- Completed Phase 19 local CLI agent bridge:
+  - added `nodeLocalCliRunner` with hidden Windows process execution
+  - added harness-context checkpoint creation for local CLI commands
+  - persisted local CLI stdout/stderr logs
+  - recorded adapter selection, start, completion, failure, and unavailability events
+  - added `/api/agent/sessions/:id/commands/:commandId/local-cli/run`
+  - wired `/agent` instruction sending to enqueue a command and dispatch local CLI bridge

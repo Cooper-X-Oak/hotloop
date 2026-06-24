@@ -15,8 +15,10 @@ import {
   listAgentMessages,
   listAgentSessions,
   listToolInvocations,
+  nodeLocalCliRunner,
   openHumanDecision,
-  recordToolInvocation
+  recordToolInvocation,
+  runLocalCliAgentCommand
 } from "./index.js";
 
 async function createSessionsRoot() {
@@ -24,6 +26,19 @@ async function createSessionsRoot() {
 }
 
 describe("agent session store", () => {
+  it("provides a real local CLI runner that executes a process with stdin", async () => {
+    const result = await nodeLocalCliRunner({
+      executable: process.execPath,
+      args: ["-e", "process.stdin.pipe(process.stdout)"],
+      cwd: process.cwd(),
+      stdin: "hotloop cli bridge"
+    });
+
+    expect(result.exitCode).toBe(0);
+    expect(result.stdout).toBe("hotloop cli bridge");
+    expect(result.stderr).toBe("");
+  });
+
   it("creates a durable agent session with adapter selection metadata", async () => {
     const sessionsRoot = await createSessionsRoot();
 
@@ -112,5 +127,105 @@ describe("agent session store", () => {
       status: "answered",
       answer: "write_uzi_first"
     });
+  });
+
+  it("runs a queued command through a local CLI bridge with harness context and logs", async () => {
+    const sessionsRoot = await createSessionsRoot();
+    await createAgentSession(sessionsRoot, {
+      id: "agent-cli",
+      workspaceRoot: "D:/workspace",
+      agentAdapter: "local-cli:codex",
+      adapterPriority: ["local-cli:codex", "api-fallback"],
+      fallbackReason: null,
+      loadedHarness: ["AGENTS.md", "loops/hotspot-writing-loop.yaml"]
+    });
+    await appendAgentMessage(sessionsRoot, "agent-cli", {
+      id: "msg-cli",
+      role: "human",
+      content: "跑近 6h AI 热点。"
+    });
+    await enqueueAgentCommand(sessionsRoot, "agent-cli", {
+      id: "cmd-cli",
+      type: "run_loop",
+      payload: { freshnessWindowHours: 6 }
+    });
+
+    const result = await runLocalCliAgentCommand(sessionsRoot, "agent-cli", "cmd-cli", {
+      executable: "codex",
+      args: ["exec", "--json"],
+      cwd: "D:/workspace",
+      runner: async (input) => {
+        expect(input.executable).toBe("codex");
+        expect(input.args).toEqual(["exec", "--json"]);
+        expect(input.cwd).toBe("D:/workspace");
+        expect(input.stdin).toContain("harness-context.json");
+        expect(input.stdin).toContain("cmd-cli");
+        return {
+          exitCode: 0,
+          stdout: "agent completed scan",
+          stderr: ""
+        };
+      }
+    });
+
+    const session = await getAgentSession(sessionsRoot, "agent-cli");
+    const events = await listAgentEvents(sessionsRoot, "agent-cli");
+    const harnessContext = await readFile(result.harnessContextPath, "utf8");
+    const stdout = await readFile(result.stdoutPath, "utf8");
+    const stderr = await readFile(result.stderrPath, "utf8");
+
+    expect(result.exitCode).toBe(0);
+    expect(session.status).toBe("succeeded");
+    expect(harnessContext).toContain("local-cli:codex");
+    expect(harnessContext).toContain("run_loop");
+    expect(stdout).toBe("agent completed scan");
+    expect(stderr).toBe("");
+    expect(events.map((event) => event.type)).toEqual([
+      "adapter_selected",
+      "harness_context_written",
+      "local_cli_started",
+      "local_cli_completed"
+    ]);
+  });
+
+  it("records local CLI unavailability without silently switching to API fallback", async () => {
+    const sessionsRoot = await createSessionsRoot();
+    await createAgentSession(sessionsRoot, {
+      id: "agent-cli-missing",
+      workspaceRoot: "D:/workspace",
+      agentAdapter: "local-cli:codex",
+      adapterPriority: ["local-cli:codex", "api-fallback"],
+      fallbackReason: null,
+      loadedHarness: ["AGENTS.md"]
+    });
+    await enqueueAgentCommand(sessionsRoot, "agent-cli-missing", {
+      id: "cmd-missing",
+      type: "run_loop",
+      payload: { freshnessWindowHours: 6 }
+    });
+
+    const result = await runLocalCliAgentCommand(
+      sessionsRoot,
+      "agent-cli-missing",
+      "cmd-missing",
+      {
+        executable: "codex",
+        args: ["exec"],
+        cwd: "D:/workspace",
+        runner: async () => {
+          throw Object.assign(new Error("spawn codex ENOENT"), { code: "ENOENT" });
+        }
+      }
+    );
+
+    const session = await getAgentSession(sessionsRoot, "agent-cli-missing");
+    const events = await listAgentEvents(sessionsRoot, "agent-cli-missing");
+
+    expect(result.exitCode).toBeNull();
+    expect(session.status).toBe("failed");
+    expect(session.agentAdapter).toBe("local-cli:codex");
+    expect(session.fallbackReason).toBeNull();
+    expect(events.map((event) => event.type)).toContain("local_cli_unavailable");
+    expect(events.map((event) => event.type)).not.toContain("api_fallback_selected");
   });
 });

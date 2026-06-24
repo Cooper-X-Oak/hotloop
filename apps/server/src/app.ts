@@ -11,7 +11,10 @@ import {
   listAgentEvents,
   listAgentMessages,
   listAgentSessions,
-  openHumanDecision
+  nodeLocalCliRunner,
+  openHumanDecision,
+  runLocalCliAgentCommand,
+  type LocalCliRunner
 } from "@hotloop/agent";
 import { createWeChatDraftThroughApi, type WeChatApiClient } from "@hotloop/adapters";
 import { writeEvidencePack } from "@hotloop/evidence";
@@ -40,6 +43,7 @@ export interface CreateAppOptions {
   modulesRoot?: string;
   feedbackRoot?: string;
   agentSessionsRoot?: string;
+  localCliRunner?: LocalCliRunner;
   allowInternalWorkspace?: boolean;
   radarHandlers?: Record<string, RadarModuleHandler>;
   wechatClient?: WeChatApiClient;
@@ -314,6 +318,28 @@ export function createApp(options: CreateAppOptions) {
         c.req.param("id"),
         c.req.param("decisionId"),
         await c.req.json()
+      ),
+      201
+    );
+  });
+
+  app.post("/api/agent/sessions/:id/commands/:commandId/local-cli/run", async (c) => {
+    if (!options.agentSessionsRoot) {
+      return c.json({ error: "agentSessionsRoot is not configured" }, 503);
+    }
+    const input = await c.req.json();
+    const runner = options.localCliRunner ?? nodeLocalCliRunner;
+    return c.json(
+      await runLocalCliAgentCommand(
+        options.agentSessionsRoot,
+        c.req.param("id"),
+        c.req.param("commandId"),
+        {
+          executable: input.executable,
+          args: input.args ?? [],
+          cwd: input.cwd,
+          runner
+        }
       ),
       201
     );

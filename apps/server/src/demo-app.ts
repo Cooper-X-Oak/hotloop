@@ -21,6 +21,11 @@ export async function createDemoApp(input: DemoRuntimeInput): Promise<DemoAppRes
     modulesRoot: runtime.modulesRoot,
     feedbackRoot: runtime.feedbackRoot,
     agentSessionsRoot: runtime.agentSessionsRoot,
+    localCliRunner: async () => ({
+      exitCode: 0,
+      stdout: "HotLoop demo local CLI bridge completed.",
+      stderr: ""
+    }),
     allowInternalWorkspace: true,
     radarHandlers: {
       "sopilot-x-rss": async () =>

@@ -40,6 +40,11 @@ export interface HotLoopApi {
     sessionId: string,
     input: Pick<AgentCommand, "id" | "type" | "payload">
   ) => Promise<AgentCommand>;
+  runAgentCommandWithLocalCli: (
+    sessionId: string,
+    commandId: string,
+    input: { executable: string; args?: string[]; cwd: string }
+  ) => Promise<{ exitCode: number | null; stdoutPath?: string; stderrPath?: string }>;
   answerAgentDecision: (
     sessionId: string,
     decisionId: string,
@@ -88,6 +93,13 @@ export function createHotLoopApi(fetchImpl: typeof fetch = fetch): HotLoopApi {
         status: "queued",
         createdAt: new Date().toISOString()
       }),
+    runAgentCommandWithLocalCli: (sessionId, commandId, input) =>
+      postJson(
+        fetchImpl,
+        `/api/agent/sessions/${sessionId}/commands/${commandId}/local-cli/run`,
+        input,
+        { exitCode: null }
+      ),
     answerAgentDecision: (sessionId, decisionId, input) =>
       postJson(fetchImpl, `/api/agent/sessions/${sessionId}/decisions/${decisionId}/answer`, input, {
         id: decisionId,

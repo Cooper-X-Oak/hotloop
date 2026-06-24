@@ -159,7 +159,7 @@ export function HotLoopApp({ api = createHotLoopApi(), initialData = EMPTY_DATA 
       role: "human",
       content: trimmed
     });
-    await api.enqueueAgentCommand(session.id, {
+    const command = await api.enqueueAgentCommand(session.id, {
       id: `cmd-${Date.now()}`,
       type: "run_loop",
       payload: {
@@ -167,7 +167,13 @@ export function HotLoopApp({ api = createHotLoopApi(), initialData = EMPTY_DATA 
         adapterPreference: "local-cli-first"
       }
     });
+    const result = await api.runAgentCommandWithLocalCli(session.id, command.id, {
+      executable: "codex",
+      args: ["exec"],
+      cwd: "."
+    });
     log(`已发送给 agent：${trimmed}`);
+    log(`本地 CLI bridge 返回：${result.exitCode ?? "未完成"}`);
     await refreshAgentSession(session.id);
     setBusyAction(null);
   }

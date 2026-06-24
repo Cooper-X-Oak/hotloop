@@ -201,3 +201,21 @@
   - command queue
   - human decision queue
 - Current implementation does not yet spawn or connect to a local CLI agent. That remains Phase 19.
+
+## Phase 19 Implemented State
+
+- `packages/agent` now exposes a local CLI bridge:
+  - `nodeLocalCliRunner`
+  - `runLocalCliAgentCommand`
+  - harness context checkpoint writing
+  - stdout/stderr log persistence
+  - local CLI lifecycle events
+  - session status updates
+- Local CLI unavailability is recorded as `local_cli_unavailable`; it does not silently switch to API fallback.
+- `apps/server` now exposes:
+  - `POST /api/agent/sessions/:id/commands/:commandId/local-cli/run`
+- `apps/server` uses the real local process runner by default and still allows tests/demo to inject a fake runner.
+- `apps/web` sends agent instructions by creating a durable command and then dispatching it through the local CLI bridge.
+- Demo runtime injects a fake local CLI runner, so `/agent` can demonstrate the bridge without spawning a real Codex process.
+- API fallback remains unimplemented and should be Phase 20.
+- CDP collection remains unimplemented and should be Phase 21.

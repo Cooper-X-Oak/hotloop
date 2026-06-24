@@ -297,6 +297,72 @@ describe("server API", () => {
     expect(decisions[0]).toMatchObject({ status: "answered", answer: "write_p0" });
   });
 
+  it("dispatches a queued agent command through the local CLI bridge", async () => {
+    const fixture = await createFixtureWorkspace();
+    const agentSessionsRoot = await mkdtemp(path.join(tmpdir(), "hotloop-api-agent-cli-"));
+    const app = createApp({
+      workspaceConfigPath: fixture.configPath,
+      agentSessionsRoot,
+      localCliRunner: async (input) => {
+        expect(input.executable).toBe("codex");
+        expect(input.stdin).toContain("cmd-cli-api");
+        return {
+          exitCode: 0,
+          stdout: "local cli finished",
+          stderr: ""
+        };
+      }
+    });
+
+    await app.request("/api/agent/sessions", {
+      method: "POST",
+      body: JSON.stringify({
+        id: "agent-cli-api",
+        workspaceRoot: "D:/workspace",
+        agentAdapter: "local-cli:codex",
+        adapterPriority: ["local-cli:codex", "api-fallback"],
+        fallbackReason: null,
+        loadedHarness: ["AGENTS.md"]
+      }),
+      headers: { "Content-Type": "application/json" }
+    });
+    await app.request("/api/agent/sessions/agent-cli-api/commands", {
+      method: "POST",
+      body: JSON.stringify({
+        id: "cmd-cli-api",
+        type: "run_loop",
+        payload: { instruction: "跑近 6h AI 热点。" }
+      }),
+      headers: { "Content-Type": "application/json" }
+    });
+
+    const dispatchResponse = await app.request(
+      "/api/agent/sessions/agent-cli-api/commands/cmd-cli-api/local-cli/run",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          executable: "codex",
+          args: ["exec", "--json"],
+          cwd: "D:/workspace"
+        }),
+        headers: { "Content-Type": "application/json" }
+      }
+    );
+    const dispatch = await dispatchResponse.json();
+    const session = await (
+      await app.request("/api/agent/sessions/agent-cli-api")
+    ).json();
+    const events = await (
+      await app.request("/api/agent/sessions/agent-cli-api/events")
+    ).json();
+
+    expect(dispatchResponse.status).toBe(201);
+    expect(dispatch.exitCode).toBe(0);
+    expect(dispatch.stdoutPath).toContain("agent.stdout.log");
+    expect(session.status).toBe("succeeded");
+    expect(events.map((event: { type: string }) => event.type)).toContain("local_cli_completed");
+  });
+
   it("exposes phase 9-13 workflow APIs", async () => {
     const fixture = await createFixtureWorkspace();
     const modulesRoot = await mkdtemp(path.join(tmpdir(), "hotloop-api-phase-modules-"));

@@ -271,6 +271,7 @@ GET  /api/agent/sessions/:id/commands
 GET  /api/agent/sessions/:id/decisions
 POST /api/agent/sessions/:id/decisions/:decisionId/answer
 POST /api/agent/sessions/:id/cancel
+POST /api/agent/sessions/:id/commands/:commandId/local-cli/run
 ```
 
 Streaming can be added after the persisted contract exists:
@@ -553,6 +554,14 @@ The UI should show when CDP is being used and which source is being collected.
 - Persist stdout/stderr logs.
 - Convert process lifecycle into session events.
 - Route the real scan command through an agent session using the local CLI bridge.
+
+Implemented baseline:
+
+- `nodeLocalCliRunner` starts a local process with `windowsHide: true`.
+- `runLocalCliAgentCommand` writes `checkpoints/harness-context.json`.
+- stdout and stderr are persisted under `logs/`.
+- the bridge records local CLI lifecycle events.
+- CLI unavailability is recorded and does not silently choose API fallback.
 
 ### Phase 20: API Fallback Bridge
 

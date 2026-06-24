@@ -8,7 +8,7 @@ Phase 0-8 established the minimal cockpit skeleton. Phase 9-14 should connect th
 
 ## Current Phase
 
-All phases through Phase 16 complete for the routed agent cockpit IA foundation. Phase 17 is the next phase and should add the explicit agent runtime and interaction contract.
+All phases through Phase 19 complete for the agent cockpit, durable agent session foundation, Agent Console, and local CLI bridge. Phase 20 is next and should add API fallback only when local CLI execution is unavailable.
 
 ## Phase Checklist
 
@@ -31,7 +31,7 @@ All phases through Phase 16 complete for the routed agent cockpit IA foundation.
 - [x] Phase 16: Agent cockpit IA with app shell, routes, feature pages, and API client
 - [x] Phase 17: Agent runtime contract with sessions, messages, commands, events, decisions, and tool invocation logs
 - [x] Phase 18: Agent Console UI with transcript, command composer, decision queue, and tool timeline
-- [ ] Phase 19: Local CLI agent bridge as the primary executor path
+- [x] Phase 19: Local CLI agent bridge as the primary executor path
 - [ ] Phase 20: API fallback bridge used only when local CLI execution is unavailable
 - [ ] Phase 21: Agent-callable CDP collection tool with silent background browser policy
 
@@ -110,3 +110,4 @@ These commands must exist before implementation is considered complete.
 | Missing durable agent session store caused RED test failure | Phase 17 RED | Added `packages/agent` with file-backed sessions, messages, commands, events, decisions, and tool invocations |
 | Missing agent API endpoints caused RED test failure | Phase 17 API RED | Added `/api/agent/sessions` session, message, command, event, and decision endpoints |
 | Missing Agent Console route caused RED test failure | Phase 18 RED | Added `/agent` route, Agent Console UI, and API client methods |
+| Missing local CLI bridge caused RED test failure | Phase 19 RED | Added `nodeLocalCliRunner`, harness checkpoint writing, CLI logs, bridge events, and `/local-cli/run` API |
