@@ -53,3 +53,12 @@ docs/
 
 This repository starts as a product shell. The existing content vault remains external and will be connected through local workspace configuration.
 
+## Product Documents
+
+- [Product Shape](docs/product-shape.md): product identity, principles, pages, and non-goals.
+- [Information Architecture](docs/information-architecture.md): how radar, topics, evidence, articles, artifacts, and publishing fit together.
+- [Architecture](docs/architecture.md): local-first workspace architecture and package boundaries.
+- [State and Loop](docs/state-and-loop.md): durable run ledger, loop flow, and resume model.
+- [Module System](docs/module-system.md): pluggable radar/evidence/writing/media/render/publisher modules.
+- [Technical Selection](docs/technical-selection.md): technology choices and rejected alternatives.
+- [Roadmap](docs/roadmap.md): staged path from product shell to usable local workspace.
