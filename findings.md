@@ -28,3 +28,12 @@
 - P0 is rendered even when empty.
 - `packages/modules` validates filesystem module manifests.
 - `apps/server` exposes enabled module list via `GET /api/modules`.
+- `packages/workspace` can now create topic packages and article package skeletons.
+- `apps/server` can create topics and article packages through API routes.
+- Final artifact directories can be validated for clean flat HTML-only output.
+- Artifact validation is available through server API.
+- `packages/adapters` has a tested WeChat draft adapter core.
+- Publish boundary is enforced: draft-only, no auto-publish.
+- `packages/feedback` records topic outcomes and summarizes source performance.
+- `apps/server` exposes feedback outcome and source performance APIs.
+- Current full verification: 9 test files, 28 tests, typecheck, and all workspace builds pass.

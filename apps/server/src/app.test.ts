@@ -131,4 +131,78 @@ describe("server API", () => {
     expect(modules).toHaveLength(1);
     expect(modules[0].id).toBe("sopilot-x");
   });
+
+  it("creates topic and article packages", async () => {
+    const fixture = await createFixtureWorkspace();
+    const app = createApp({ workspaceConfigPath: fixture.configPath });
+
+    const topicResponse = await app.request("/api/topics", {
+      method: "POST",
+      body: JSON.stringify({
+        date: "2026-06-24",
+        slug: "hn-candidate",
+        candidate: {
+          id: "hn-1",
+          lane: "P2",
+          title: "HN candidate",
+          source: "hn"
+        }
+      }),
+      headers: { "Content-Type": "application/json" }
+    });
+    const topic = await topicResponse.json();
+
+    const articleResponse = await app.request("/api/topics/2026-06-24/hn-candidate/article", {
+      method: "POST",
+      body: JSON.stringify({ group: "科普" }),
+      headers: { "Content-Type": "application/json" }
+    });
+    const article = await articleResponse.json();
+
+    expect(topicResponse.status).toBe(201);
+    expect(topic.slug).toBe("hn-candidate");
+    expect(articleResponse.status).toBe(201);
+    expect(article.group).toBe("科普");
+  });
+
+  it("validates artifact directories", async () => {
+    const fixture = await createFixtureWorkspace();
+    const app = createApp({ workspaceConfigPath: fixture.configPath });
+
+    const response = await app.request("/api/artifacts/validate?date=2026-06-24");
+    const result = await response.json();
+
+    expect(response.status).toBe(200);
+    expect(result.valid).toBe(true);
+  });
+
+  it("records and summarizes feedback outcomes", async () => {
+    const fixture = await createFixtureWorkspace();
+    const feedbackRoot = await mkdtemp(path.join(tmpdir(), "hotloop-api-feedback-"));
+    const app = createApp({ workspaceConfigPath: fixture.configPath, feedbackRoot });
+
+    const recordResponse = await app.request("/api/feedback/outcomes", {
+      method: "POST",
+      body: JSON.stringify({
+        topicId: "topic-1",
+        source: "sopilot-x",
+        lane: "P0",
+        metrics: { views: 1200, likes: 30, shares: 6 }
+      }),
+      headers: { "Content-Type": "application/json" }
+    });
+    const summaryResponse = await app.request("/api/feedback/sources");
+    const summary = await summaryResponse.json();
+
+    expect(recordResponse.status).toBe(201);
+    expect(summary).toEqual([
+      {
+        source: "sopilot-x",
+        count: 1,
+        averageViews: 1200,
+        averageLikes: 30,
+        averageShares: 6
+      }
+    ]);
+  });
 });

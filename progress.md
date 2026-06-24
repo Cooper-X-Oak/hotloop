@@ -28,3 +28,28 @@
   - filters enabled modules
   - exposed `GET /api/modules`
   - verified `npm run check`
+- Completed Phase 5 topic and article workflow:
+  - create topic package from candidate
+  - create article package skeleton
+  - read topic package status
+  - exposed topic/article API routes
+  - verified `npm run check`
+- Completed Phase 6 artifact library:
+  - validates flat final artifact directories
+  - rejects subdirectories and non-final files
+  - exposed artifact validation API
+  - verified `npm run check`
+- Completed Phase 7 publish console foundation:
+  - added `packages/adapters`
+  - implemented WeChat draft adapter core
+  - uploads inline data images through injected service
+  - uploads cover through injected service
+  - creates draft through injected service
+  - rejects auto-publish attempts
+  - verified `npm run check`
+- Completed Phase 8 feedback and learning foundation:
+  - added `packages/feedback`
+  - records topic outcomes to JSONL
+  - summarizes source performance
+  - exposed feedback API routes
+  - verified `npm run check` with 28 tests
