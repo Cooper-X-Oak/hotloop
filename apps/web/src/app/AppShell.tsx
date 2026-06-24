@@ -26,9 +26,9 @@ const NAV_ITEMS = [
 export function AppShell({ summary, activityLog, children }: AppShellProps) {
   return (
     <div className="product-shell">
-      <aside className="sidebar" aria-label="产品视图">
+      <aside className="sidebar" aria-label="Agent 工具间">
         <p className="brand">HotLoop</p>
-        <p className="side-note">本地优先的 AI 热点写作工作台</p>
+        <p className="side-note">给 agent 使用的本地热点写作工具间</p>
         <nav>
           {NAV_ITEMS.map((item) => (
             <NavLink key={item.to} to={item.to}>
@@ -41,7 +41,7 @@ export function AppShell({ summary, activityLog, children }: AppShellProps) {
       <div className="workspace">
         <section className="workflow-overview" aria-label="工作流状态">
           <div>
-            <p className="eyebrow">当前工作流</p>
+            <p className="eyebrow">Agent 当前工作流</p>
             <h1>从热点扫描到草稿发布</h1>
           </div>
           <div className="status-strip">

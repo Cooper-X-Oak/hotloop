@@ -2,9 +2,9 @@
 
 ## Product Definition
 
-HotLoop is a local-first agentic content workspace for high-velocity AI and technology publishing.
+HotLoop is a local-first agent cockpit and toolroom for high-velocity AI and technology publishing.
 
-It is not a generic AI writing tool. It is an operations console for deciding what is worth writing now, preserving the evidence chain, producing reviewable article packages, rendering finished artifacts, and preparing publishing drafts.
+It is not a standalone product and not a generic AI writing tool. The executor is still the agent. HotLoop is the operation surface and durable tool layer that lets the agent and human inspect what is worth writing now, preserve the evidence chain, produce reviewable article packages, render finished artifacts, and prepare publishing drafts.
 
 ## Working Name
 
@@ -23,7 +23,7 @@ The first user is a solo AI / technology content creator who cares about:
 - official updates from companies such as OpenAI, Anthropic, Google, GitHub, and Vercel
 - producing evidence-backed WeChat-ready articles without manual file chaos
 
-The first version is built for one power user, not for teams.
+The first version is built for one power user working with an agent, not for teams or anonymous end users.
 
 ## Core Job
 
@@ -41,7 +41,8 @@ What is worth writing right now, why is it worth writing, what can be stated as 
 4. Durable run state before conversational memory.
 5. Modular radar and adapters before hardcoded sources.
 6. Human-reviewed publishing before auto-publish.
-7. Operations console before traditional CMS.
+7. Agent cockpit before standalone app.
+8. Tools and durable state before autonomous backend replacement.
 
 ## First Workflow
 
@@ -97,6 +98,7 @@ scan fresh sources
 
 - Do not build a generic AI writer.
 - Do not build a multi-user SaaS first.
+- Do not make HotLoop the executor; the agent remains the executor.
 - Do not migrate the content vault into a database first.
 - Do not make a traditional CMS the primary product metaphor.
 - Do not auto-publish to external platforms.
@@ -108,4 +110,3 @@ scan fresh sources
 Generic AI writing tools help turn a prompt into prose.
 
 HotLoop helps decide what should be written, proves what can be safely written, produces the artifact, and keeps the workflow recoverable.
-

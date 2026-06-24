@@ -2,18 +2,19 @@
 
 ## Architecture Style
 
-HotLoop is a local-first agentic workspace application.
+HotLoop is a local-first agent cockpit and toolroom.
 
-The product shell operates on an external content vault. It does not own the long-term content by default. It reads, indexes, renders, and orchestrates work around that vault.
+The agent remains the executor. HotLoop operates on an external content vault as the visible control surface and durable tool layer for that agent. It does not own the long-term content by default. It reads, indexes, renders, and records work around that vault.
 
 ## Layered View
 
 ```text
-Product UI
+Agent Cockpit UI
   -> Local API
   -> Domain Services
   -> Job Runner
   -> Module Registry / Adapters
+  -> Agent / Tool Execution
   -> External Content Vault + External Platforms
 ```
 
@@ -32,16 +33,16 @@ Product UI
 4. Durable Run Layer
    run.json, events.jsonl, checkpoints, artifacts, logs.
 
-5. Product API Layer
-   Stable endpoints for UI and commands.
+5. Cockpit API Layer
+   Stable endpoints for the UI, commands, and agent tool calls.
 
-6. Frontend Operations Console
+6. Frontend Agent Console
    Radar, topic, article, artifact, and publish views.
 ```
 
 ## Repository Boundary
 
-This product repo contains the product shell and reusable implementation.
+This repo contains the agent cockpit shell and reusable implementation.
 
 It must not absorb private content vaults.
 
@@ -93,7 +94,7 @@ apps/server
   Local API, job orchestration, workspace access, module execution.
 
 apps/web
-  Local operations console.
+  Local agent operations console.
 ```
 
 ## Storage Policy
@@ -148,4 +149,3 @@ GET  /api/runs/:id
 GET  /api/runs/:id/events
 POST /api/runs/:id/resume
 ```
-

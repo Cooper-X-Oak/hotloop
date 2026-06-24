@@ -2,13 +2,13 @@
 
 ## Goal
 
-Build HotLoop from the current Phase 0 product guardrails into a runnable local-first agentic content workspace through Phase 16.
+Build HotLoop from the current Phase 0 product guardrails into a runnable local-first agent cockpit and toolroom through Phase 16.
 
-Phase 0-8 established the minimal product skeleton. Phase 9-14 should connect the skeleton into a usable local product path without violating the core boundaries: content vault remains external, runs are durable, modules are filesystem-based, browser/source collection is explicit, and publishing remains draft-only.
+Phase 0-8 established the minimal cockpit skeleton. Phase 9-14 should connect the skeleton into a usable local agent operation path without violating the core boundaries: content vault remains external, runs are durable, modules are filesystem-based, browser/source collection is explicit, the agent remains the executor, and publishing remains draft-only.
 
 ## Current Phase
 
-All phases through Phase 16 complete for the routed production frontend IA foundation.
+All phases through Phase 16 complete for the routed agent cockpit IA foundation.
 
 ## Phase Checklist
 
@@ -26,9 +26,9 @@ All phases through Phase 16 complete for the routed production frontend IA found
 - [x] Phase 11: Evidence collector foundation
 - [x] Phase 12: Writer and renderer pipeline foundation
 - [x] Phase 13: WeChat draft integration layer
-- [x] Phase 14: Product UI views for radar, runs, artifacts, publish, and feedback
+- [x] Phase 14: Agent cockpit views for radar, runs, artifacts, publish, and feedback
 - [x] Phase 15: Local demo runtime and one-command operation page
-- [x] Phase 16: Production frontend IA with app shell, routes, feature pages, and API client
+- [x] Phase 16: Agent cockpit IA with app shell, routes, feature pages, and API client
 
 ## Implementation Strategy
 
@@ -57,7 +57,7 @@ All phases through Phase 16 complete for the routed production frontend IA found
 ## Planned Apps
 
 - `apps/server`: local HTTP API
-- `apps/web`: local operations console
+- `apps/web`: local agent operations console
 - `modules/*`: first real filesystem radar modules
 
 ## Verification Requirements
@@ -94,8 +94,8 @@ These commands must exist before implementation is considered complete.
 | Missing evidence package caused RED test failure | Phase 11 RED | Implemented `packages/evidence` |
 | Missing renderer package caused RED test failure | Phase 12 RED | Implemented `packages/render` |
 | Missing WeChat API integration function caused RED test failure | Phase 13 RED | Added `createWeChatDraftThroughApi` |
-| Missing product console caused RED test failure | Phase 14 RED | Added `ProductConsole` and multi-view UI |
+| Missing agent cockpit console caused RED test failure | Phase 14 RED | Added `ProductConsole` and multi-view UI |
 | Missing server workflow APIs caused RED test failure | Phase 9-13 API RED | Added smoke, radar run, evidence, render, and WeChat draft routes |
 | Missing durable loop runner caused RED test failure | Phase 10 runner RED | Added `packages/loop` and `/api/loops/hotspot/scan` |
 | Missing demo runtime caused RED test failure | Phase 15 RED | Added `packages/demo`, demo server entry, Vite proxy, and `npm run dev:demo` |
-| Missing routed app shell and API client caused RED test failure | Phase 16 RED | Added React Router app shell, feature pages, and shared API client |
+| Missing routed agent cockpit shell and API client caused RED test failure | Phase 16 RED | Added React Router app shell, feature pages, and shared API client |

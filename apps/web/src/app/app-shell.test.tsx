@@ -4,7 +4,7 @@ import { describe, expect, it } from "vitest";
 import { AppShell } from "./AppShell.js";
 
 describe("app shell", () => {
-  it("renders production navigation as routed Chinese product sections", () => {
+  it("renders routed Chinese agent cockpit sections", () => {
     const html = renderToStaticMarkup(
       <MemoryRouter initialEntries={["/radar"]}>
         <AppShell

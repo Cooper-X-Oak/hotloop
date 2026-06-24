@@ -2,7 +2,8 @@
 
 ## Product Constraints
 
-- HotLoop is a filesystem-first agentic workspace, not a CMS.
+- HotLoop is a filesystem-first agent cockpit and toolroom, not a standalone product or CMS.
+- The agent remains the executor; HotLoop makes the loop observable, steerable, durable, and resumable.
 - External content vault remains source of truth.
 - Durable run state must live outside model context.
 - Module capabilities should be loaded from filesystem manifests.
@@ -45,7 +46,7 @@
 - Phase 11 should add evidence pack persistence so a selected topic can keep source snapshots and claim boundaries outside model context.
 - Phase 12 should add a basic writer/render path from article markdown to final `cooper-md` dark HTML artifacts.
 - Phase 13 should move WeChat from pure draft adapter core toward an integration boundary with explicit credentials injection and draft-only behavior.
-- Phase 14 should turn the web app from a radar-only page into a small operations console with radar, runs, artifacts, publish, and feedback views.
+- Phase 14 should turn the web app from a radar-only page into a small agent operations console with radar, runs, artifacts, publish, and feedback views.
 
 ## Phase 9-14 Implemented State
 
@@ -73,7 +74,7 @@
   - `POST /api/topics/:date/:slug/evidence`
   - `POST /api/topics/:date/:slug/render`
   - `POST /api/publish/wechat/draft`
-- `apps/web` now renders a multi-view product console with Radar, Runs, Artifacts, Publish, and Feedback sections.
+- `apps/web` now renders a multi-view agent cockpit console with Radar, Runs, Artifacts, Publish, and Feedback sections.
 - Current full verification after Phase 14: 14 test files, 37 tests, typecheck, and all workspace builds pass.
 
 ## Phase 15 Direction
@@ -114,10 +115,21 @@
   - `反馈学习`: reads source performance and can record a demo outcome.
 - The left navigation still uses in-page anchors, but each section now contains workflow actions mapped to backend APIs.
 
+## Product Meaning Correction
+
+- HotLoop must not drift into a standalone SaaS, CMS, or self-contained content app.
+- Its correct role is an agent-facing operating surface:
+  - exposes tools
+  - records durable state
+  - shows run checkpoints
+  - lets the human steer the agent
+  - keeps the content vault and agent harness as the real center of gravity
+- Future phases should prioritize agent runtime, CDP capability, harness loading, and run/event inspection over generic product polish.
+
 ## Phase 16 Direction
 
 - The current Chinese workflow console proves end-to-end behavior but is still one page with anchor navigation.
-- Production frontend IA should split the product into an app shell plus routed feature pages:
+- Agent cockpit IA should split the operation surface into an app shell plus routed feature pages:
   - `/radar`
   - `/topics`
   - `/runs`
@@ -130,7 +142,7 @@
 ## Phase 16 Implemented State
 
 - `apps/web/src/main.tsx` now only mounts `BrowserRouter` and `HotLoopApp`.
-- `apps/web/src/app/AppShell.tsx` owns product shell navigation, summary state, and activity log.
+- `apps/web/src/app/AppShell.tsx` owns agent cockpit navigation, summary state, and activity log.
 - `apps/web/src/app/App.tsx` owns shared workflow state and route composition.
 - `apps/web/src/shared/api/client.ts` centralizes backend API reads and workflow actions.
 - Feature pages are split under `apps/web/src/features/`:

@@ -1,12 +1,12 @@
 # HotLoop
 
-HotLoop is a local-first agentic content workspace for high-velocity AI and technology publishing.
+HotLoop is a local-first agent cockpit and toolroom for high-velocity AI and technology publishing.
 
-It is designed around an existing content vault, not a traditional CMS database. The product shell reads a local workspace, runs modular radar and writing workflows, records durable run state, renders final artifacts, and can later prepare drafts for publishing channels such as WeChat.
+It is designed around an existing content vault and an external agent executor, not as a standalone SaaS product or traditional CMS database. The cockpit gives the agent a visible operating surface: it reads a local workspace, exposes tools, records durable run state, renders final artifacts, and can later prepare drafts for publishing channels such as WeChat.
 
 ## Product Direction
 
-HotLoop is not a generic AI writer. It is an operations console for deciding what is worth writing now, preserving the evidence chain, producing reviewable drafts, rendering finished HTML artifacts, and handing off to publishing adapters.
+HotLoop is not a generic AI writer and not the primary executor. It is an operations console for the agent-human loop: deciding what is worth writing now, preserving the evidence chain, producing reviewable drafts, rendering finished HTML artifacts, and handing off to publishing adapters.
 
 The first target workflow is:
 
@@ -25,6 +25,7 @@ AI / tech sources
 
 - Keep the content vault as the source of truth.
 - Treat agent instructions, skills, and style docs as runtime policy.
+- Keep the agent as the executor; HotLoop is the operating surface and durable tool layer.
 - Wrap existing scripts with adapters before rewriting them.
 - Record durable runs with events, checkpoints, logs, and artifact references.
 - Keep publishing human-reviewed; create drafts, do not auto-publish.
@@ -34,7 +35,7 @@ AI / tech sources
 
 ```text
 apps/
-  web/       # local operations console
+  web/       # local agent operations console
   server/    # local API and job orchestration
 
 packages/
@@ -51,7 +52,7 @@ docs/
 
 ## Initial Status
 
-This repository starts as a product shell. The existing content vault remains external and will be connected through local workspace configuration.
+This repository starts as an agent cockpit shell. The existing content vault remains external and will be connected through local workspace configuration.
 
 ## Product Documents
 
