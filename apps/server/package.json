@@ -1,0 +1,14 @@
+{
+  "name": "@hotloop/server",
+  "version": "0.0.0",
+  "type": "module",
+  "private": true,
+  "scripts": {
+    "build": "tsc -p tsconfig.json --noEmit",
+    "dev": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@hotloop/runner": "0.0.0",
+    "@hotloop/workspace": "0.0.0"
+  }
+}

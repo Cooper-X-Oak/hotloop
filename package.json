@@ -5,7 +5,10 @@
   "description": "Local-first agentic content workspace for high-velocity AI and technology publishing.",
   "type": "module",
   "scripts": {
-    "check": "echo \"No checks configured yet\""
+    "test": "vitest run",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "build": "npm run build --workspaces --if-present",
+    "check": "npm run test && npm run typecheck && npm run build"
   },
   "workspaces": [
     "apps/*",
@@ -21,6 +24,23 @@
     "local-first",
     "ai-publishing"
   ],
-  "license": "UNLICENSED"
+  "license": "UNLICENSED",
+  "dependencies": {
+    "@hono/node-server": "^2.0.6",
+    "hono": "^4.12.27",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "yaml": "^2.9.0",
+    "zod": "^4.4.3"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.0",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vite": "^8.1.0",
+    "vitest": "^4.1.9"
+  }
 }
-
