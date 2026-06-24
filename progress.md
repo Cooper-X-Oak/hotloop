@@ -53,3 +53,27 @@
   - summarizes source performance
   - exposed feedback API routes
   - verified `npm run check` with 28 tests
+- Started Phase 9-14 continuation:
+  - extended persistent task plan to Phase 14
+  - kept product boundary as local-first, filesystem-first, durable, modular, and draft-only
+- Completed Phase 9 real workspace smoke foundation:
+  - added `packages/smoke`
+  - validates external content vault config and required workspace paths
+- Completed Phase 10 module execution runner:
+  - added `runRadarModules`
+  - writes normalized candidate cache
+  - added first-party P0-P4 radar module manifests
+- Completed Phase 11 evidence collector foundation:
+  - added `packages/evidence`
+  - writes evidence pack JSON, source snapshots, and public analysis
+- Completed Phase 12 writer/render foundation:
+  - added `packages/render`
+  - renders article package markdown into flat cooper-md dark HTML artifacts
+- Completed Phase 13 WeChat draft integration layer:
+  - added injected-client WeChat draft integration
+  - preserved draft-only behavior
+- Completed Phase 14 product UI views:
+  - added `ProductConsole`
+  - renders Radar, Runs, Artifacts, Publish, and Feedback views
+- Exposed Phase 9-13 workflow APIs through `apps/server`.
+- Verified `npm run check` with 13 test files and 36 tests.

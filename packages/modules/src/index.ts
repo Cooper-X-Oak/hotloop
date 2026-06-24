@@ -1,5 +1,6 @@
-import { readdir, readFile } from "node:fs/promises";
+import { mkdir, readdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import type { Candidate } from "@hotloop/workspace";
 import YAML from "yaml";
 import { z } from "zod";
 
@@ -54,3 +55,54 @@ export async function listEnabledModules(modulesRoot: string): Promise<ModuleMan
   return modules.filter((module) => module.enabled);
 }
 
+export type RadarModuleHandler = (module: ModuleManifest) => Promise<Candidate[]>;
+
+export interface RunRadarModulesInput {
+  modulesRoot: string;
+  scratchRoot: string;
+  handlers: Record<string, RadarModuleHandler>;
+}
+
+export interface RunRadarModulesResult {
+  candidates: Candidate[];
+  candidatesPath: string;
+  modules: Array<{
+    id: string;
+    candidateCount: number;
+  }>;
+}
+
+export async function runRadarModules(
+  input: RunRadarModulesInput
+): Promise<RunRadarModulesResult> {
+  const modules = (await listEnabledModules(input.modulesRoot)).filter(
+    (module) => module.type === "radar"
+  );
+  const candidates: Candidate[] = [];
+  const moduleResults: RunRadarModulesResult["modules"] = [];
+
+  for (const module of modules) {
+    const handler = input.handlers[module.id];
+    if (!handler) {
+      moduleResults.push({ id: module.id, candidateCount: 0 });
+      continue;
+    }
+    const moduleCandidates = await handler(module);
+    candidates.push(...moduleCandidates);
+    moduleResults.push({ id: module.id, candidateCount: moduleCandidates.length });
+  }
+
+  const candidatesPath = path.join(input.scratchRoot, "candidates", "latest.json");
+  await mkdir(path.dirname(candidatesPath), { recursive: true });
+  await writeFile(
+    candidatesPath,
+    `${JSON.stringify({ generatedAt: new Date().toISOString(), candidates }, null, 2)}\n`,
+    "utf8"
+  );
+
+  return {
+    candidates,
+    candidatesPath,
+    modules: moduleResults
+  };
+}

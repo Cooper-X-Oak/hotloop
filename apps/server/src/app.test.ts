@@ -205,4 +205,94 @@ describe("server API", () => {
       }
     ]);
   });
+
+  it("exposes phase 9-13 workflow APIs", async () => {
+    const fixture = await createFixtureWorkspace();
+    const modulesRoot = await mkdtemp(path.join(tmpdir(), "hotloop-api-phase-modules-"));
+    const moduleRoot = path.join(modulesRoot, "sopilot-x");
+    await mkdir(moduleRoot, { recursive: true });
+    await writeFile(
+      path.join(moduleRoot, "module.yaml"),
+      "id: sopilot-x\ntype: radar\nname: X explosive posts\nversion: 0.1.0\nenabled: true\nlane: P0\n",
+      "utf8"
+    );
+    const app = createApp({
+      workspaceConfigPath: fixture.configPath,
+      repoRoot: await mkdtemp(path.join(tmpdir(), "hotloop-api-repo-")),
+      modulesRoot,
+      radarHandlers: {
+        "sopilot-x": async () => [
+          {
+            id: "x-1",
+            lane: "P0",
+            title: "Explosive X post",
+            source: "sopilot-x",
+            url: "https://x.com/example/status/1"
+          }
+        ]
+      },
+      wechatClient: {
+        uploadContentImage: async () => "https://mmbiz.qpic.cn/inline.png",
+        uploadCoverImage: async () => "cover-media-id",
+        addDraft: async () => "draft-media-id"
+      }
+    });
+
+    const smoke = await (await app.request("/api/smoke")).json();
+    const radarRun = await (await app.request("/api/radar/run", { method: "POST" })).json();
+    await app.request("/api/topics", {
+      method: "POST",
+      body: JSON.stringify({
+        date: "2026-06-24",
+        slug: "x-post",
+        candidate: radarRun.candidates[0]
+      }),
+      headers: { "Content-Type": "application/json" }
+    });
+    await app.request("/api/topics/2026-06-24/x-post/article", {
+      method: "POST",
+      body: JSON.stringify({ group: "default" }),
+      headers: { "Content-Type": "application/json" }
+    });
+    const evidenceResponse = await app.request("/api/topics/2026-06-24/x-post/evidence", {
+      method: "POST",
+      body: JSON.stringify({
+        sources: [
+          {
+            id: "x-1",
+            url: "https://x.com/example/status/1",
+            title: "Original X post",
+            capturedAt: "2026-06-24T12:00:00+08:00",
+            evidenceLevel: "L2",
+            summary: "Original post captured."
+          }
+        ],
+        publicAnalysis: "L2 evidence captured."
+      }),
+      headers: { "Content-Type": "application/json" }
+    });
+    const renderResponse = await app.request("/api/topics/2026-06-24/x-post/render", {
+      method: "POST"
+    });
+    const publishResponse = await app.request("/api/publish/wechat/draft", {
+      method: "POST",
+      body: JSON.stringify({
+        title: "Draft",
+        digest: "Digest",
+        html: '<section><img src="data:image/png;base64,AAAA" /></section>',
+        coverImagePath: "cover.png"
+      }),
+      headers: { "Content-Type": "application/json" }
+    });
+    const rendered = await renderResponse.json();
+    const draft = await publishResponse.json();
+
+    expect(smoke.ok).toBe(true);
+    expect(radarRun.candidates).toHaveLength(1);
+    expect(evidenceResponse.status).toBe(201);
+    expect(renderResponse.status).toBe(201);
+    expect(rendered.fileName).toBe("2026-06-24-x-post.html");
+    expect(publishResponse.status).toBe(201);
+    expect(draft.mediaId).toBe("draft-media-id");
+  });
 });

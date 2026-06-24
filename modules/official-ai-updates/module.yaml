@@ -1,0 +1,21 @@
+id: official-ai-updates
+type: radar
+name: Official AI product updates
+version: 0.1.0
+enabled: true
+lane: P3
+freshnessWindowHours: 24
+requires:
+  - network
+entrypoints:
+  fetch: official.watchlist
+  normalize: candidate.normalize
+outputs:
+  - Candidate[]
+policy:
+  - docs/adr/0004-no-opaque-agent-search-as-primary-source.md
+health:
+  timeoutMs: 30000
+  retryCount: 1
+notes: >
+  Watches official blogs, changelogs, and product-lead sources for confirmed updates.

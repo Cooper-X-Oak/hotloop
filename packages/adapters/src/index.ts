@@ -26,6 +26,17 @@ export interface WeChatDraftResult {
   }>;
 }
 
+export interface WeChatApiClient {
+  uploadContentImage: (source: { src: string; index: number }) => Promise<string>;
+  uploadCoverImage: (coverImagePath: string) => Promise<string>;
+  addDraft: (draft: {
+    title: string;
+    digest: string;
+    content: string;
+    thumbMediaId: string;
+  }) => Promise<string>;
+}
+
 export async function createWeChatDraft(
   input: WeChatDraftInput,
   services: WeChatDraftServices
@@ -59,9 +70,19 @@ export async function createWeChatDraft(
   };
 }
 
+export async function createWeChatDraftThroughApi(
+  input: WeChatDraftInput,
+  client: WeChatApiClient
+): Promise<WeChatDraftResult> {
+  return createWeChatDraft(input, {
+    uploadContentImage: client.uploadContentImage,
+    uploadCoverImage: client.uploadCoverImage,
+    createDraft: client.addDraft
+  });
+}
+
 function extractImageSources(html: string): string[] {
   return [...html.matchAll(/<img\b[^>]*\bsrc=["']([^"']+)["'][^>]*>/gi)].map(
     (match) => match[1] ?? ""
   );
 }
-

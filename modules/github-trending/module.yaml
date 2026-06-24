@@ -1,0 +1,21 @@
+id: github-trending
+type: radar
+name: GitHub Trending
+version: 0.1.0
+enabled: true
+lane: P1
+freshnessWindowHours: 24
+requires:
+  - network
+entrypoints:
+  fetch: github.trending
+  normalize: candidate.normalize
+outputs:
+  - Candidate[]
+policy:
+  - docs/module-system.md
+health:
+  timeoutMs: 30000
+  retryCount: 1
+notes: >
+  Captures repository velocity and open-source momentum for AI developer tools.

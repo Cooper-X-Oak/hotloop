@@ -1,7 +1,11 @@
 import { Hono } from "hono";
+import { createWeChatDraftThroughApi, type WeChatApiClient } from "@hotloop/adapters";
+import { writeEvidencePack } from "@hotloop/evidence";
 import { recordTopicOutcome, summarizeSourcePerformance } from "@hotloop/feedback";
-import { listEnabledModules } from "@hotloop/modules";
+import { listEnabledModules, runRadarModules, type RadarModuleHandler } from "@hotloop/modules";
+import { renderArticleHtml } from "@hotloop/render";
 import { createRun, listRuns } from "@hotloop/runner";
+import { runWorkspaceSmokeTest } from "@hotloop/smoke";
 import {
   createArticlePackage,
   createTopicPackage,
@@ -16,9 +20,12 @@ import {
 
 export interface CreateAppOptions {
   workspaceConfigPath: string;
+  repoRoot?: string;
   runsRoot?: string;
   modulesRoot?: string;
   feedbackRoot?: string;
+  radarHandlers?: Record<string, RadarModuleHandler>;
+  wechatClient?: WeChatApiClient;
 }
 
 export function createApp(options: CreateAppOptions) {
@@ -86,6 +93,33 @@ export function createApp(options: CreateAppOptions) {
     return c.json(await listEnabledModules(options.modulesRoot));
   });
 
+  app.get("/api/smoke", async (c) => {
+    if (!options.repoRoot) {
+      return c.json({ error: "repoRoot is not configured" }, 503);
+    }
+    return c.json(
+      await runWorkspaceSmokeTest({
+        repoRoot: options.repoRoot,
+        workspaceConfigPath: options.workspaceConfigPath
+      })
+    );
+  });
+
+  app.post("/api/radar/run", async (c) => {
+    if (!options.modulesRoot) {
+      return c.json({ error: "modulesRoot is not configured" }, 503);
+    }
+    const workspace = await getWorkspace();
+    return c.json(
+      await runRadarModules({
+        modulesRoot: options.modulesRoot,
+        scratchRoot: workspace.scratchRoot,
+        handlers: options.radarHandlers ?? {}
+      }),
+      201
+    );
+  });
+
   app.post("/api/topics", async (c) => {
     const workspace = await getWorkspace();
     const input = await c.req.json();
@@ -103,6 +137,28 @@ export function createApp(options: CreateAppOptions) {
       group: input.group ?? "default"
     });
     return c.json(article, 201);
+  });
+
+  app.post("/api/topics/:date/:slug/evidence", async (c) => {
+    const workspace = await getWorkspace();
+    const topic = await getTopicPackage(workspace, c.req.param("date"), c.req.param("slug"));
+    return c.json(await writeEvidencePack(topic, await c.req.json()), 201);
+  });
+
+  app.post("/api/topics/:date/:slug/render", async (c) => {
+    const workspace = await getWorkspace();
+    const topic = await getTopicPackage(workspace, c.req.param("date"), c.req.param("slug"));
+    if (!topic.articlePackage) {
+      return c.json({ error: "Article package has not been created" }, 409);
+    }
+    return c.json(await renderArticleHtml(workspace, topic, topic.articlePackage), 201);
+  });
+
+  app.post("/api/publish/wechat/draft", async (c) => {
+    if (!options.wechatClient) {
+      return c.json({ error: "wechatClient is not configured" }, 503);
+    }
+    return c.json(await createWeChatDraftThroughApi(await c.req.json(), options.wechatClient), 201);
   });
 
   app.post("/api/feedback/outcomes", async (c) => {

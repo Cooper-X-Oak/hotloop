@@ -1,0 +1,21 @@
+id: hacker-news
+type: radar
+name: Hacker News AI discussions
+version: 0.1.0
+enabled: true
+lane: P2
+freshnessWindowHours: 24
+requires:
+  - network
+entrypoints:
+  fetch: rss.fetch
+  normalize: candidate.normalize
+outputs:
+  - Candidate[]
+policy:
+  - docs/module-system.md
+health:
+  timeoutMs: 30000
+  retryCount: 1
+notes: >
+  International community signal from Hacker News and related AI/developer discussions.

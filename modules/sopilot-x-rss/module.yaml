@@ -1,0 +1,22 @@
+id: sopilot-x-rss
+type: radar
+name: X explosive posts RSS
+version: 0.1.0
+enabled: true
+lane: P0
+freshnessWindowHours: 6
+requires:
+  - network
+entrypoints:
+  fetch: rss.fetch
+  normalize: candidate.normalize
+outputs:
+  - Candidate[]
+policy:
+  - docs/adr/0004-no-opaque-agent-search-as-primary-source.md
+health:
+  timeoutMs: 30000
+  retryCount: 1
+notes: >
+  Tracks curated X/Twitter explosive-post RSS sources. Browser/CDP collection
+  can enrich this module later, but must stay background-only and never steal focus.

@@ -1,23 +1,29 @@
 import { createRoot } from "react-dom/client";
-import { RadarPage } from "./radar.js";
+import { ProductConsole } from "./console.js";
 import "./styles.css";
 
-async function loadCandidates() {
+async function loadJson<T>(url: string, fallback: T): Promise<T> {
   try {
-    const response = await fetch("/api/candidates");
-    if (!response.ok) return [];
+    const response = await fetch(url);
+    if (!response.ok) return fallback;
     return await response.json();
   } catch {
-    return [];
+    return fallback;
   }
 }
 
-const candidates = await loadCandidates();
+const [candidates, runs, artifacts, feedback] = await Promise.all([
+  loadJson("/api/candidates", []),
+  loadJson("/api/runs", []),
+  loadJson(`/api/artifacts?date=${new Date().toISOString().slice(0, 10)}`, []),
+  loadJson("/api/feedback/sources", [])
+]);
 const root = document.getElementById("root");
 
 if (!root) {
   throw new Error("Missing root element");
 }
 
-createRoot(root).render(<RadarPage candidates={candidates} />);
-
+createRoot(root).render(
+  <ProductConsole candidates={candidates} runs={runs} artifacts={artifacts} feedback={feedback} />
+);

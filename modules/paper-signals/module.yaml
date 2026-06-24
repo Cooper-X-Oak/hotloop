@@ -1,0 +1,21 @@
+id: paper-signals
+type: radar
+name: Recent paper signals
+version: 0.1.0
+enabled: true
+lane: P4
+freshnessWindowHours: 168
+requires:
+  - network
+entrypoints:
+  fetch: papers.recent
+  normalize: candidate.normalize
+outputs:
+  - Candidate[]
+policy:
+  - loops/hotspot-writing-loop.yaml
+health:
+  timeoutMs: 30000
+  retryCount: 1
+notes: >
+  Keeps paper candidates recent and capped, prioritizing product or developer impact.
