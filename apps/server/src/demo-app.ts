@@ -20,6 +20,7 @@ export async function createDemoApp(input: DemoRuntimeInput): Promise<DemoAppRes
     runsRoot: runtime.runsRoot,
     modulesRoot: runtime.modulesRoot,
     feedbackRoot: runtime.feedbackRoot,
+    agentSessionsRoot: runtime.agentSessionsRoot,
     allowInternalWorkspace: true,
     radarHandlers: {
       "sopilot-x-rss": async () =>

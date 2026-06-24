@@ -1,4 +1,18 @@
 import { Hono } from "hono";
+import {
+  answerHumanDecision,
+  appendAgentEvent,
+  appendAgentMessage,
+  createAgentSession,
+  enqueueAgentCommand,
+  getAgentSession,
+  listAgentCommands,
+  listAgentDecisions,
+  listAgentEvents,
+  listAgentMessages,
+  listAgentSessions,
+  openHumanDecision
+} from "@hotloop/agent";
 import { createWeChatDraftThroughApi, type WeChatApiClient } from "@hotloop/adapters";
 import { writeEvidencePack } from "@hotloop/evidence";
 import { recordTopicOutcome, summarizeSourcePerformance } from "@hotloop/feedback";
@@ -25,6 +39,7 @@ export interface CreateAppOptions {
   runsRoot?: string;
   modulesRoot?: string;
   feedbackRoot?: string;
+  agentSessionsRoot?: string;
   allowInternalWorkspace?: boolean;
   radarHandlers?: Record<string, RadarModuleHandler>;
   wechatClient?: WeChatApiClient;
@@ -198,6 +213,110 @@ export function createApp(options: CreateAppOptions) {
       return c.json({ error: "feedbackRoot is not configured" }, 503);
     }
     return c.json(await summarizeSourcePerformance(options.feedbackRoot));
+  });
+
+  app.get("/api/agent/sessions", async (c) => {
+    if (!options.agentSessionsRoot) {
+      return c.json({ error: "agentSessionsRoot is not configured" }, 503);
+    }
+    return c.json(await listAgentSessions(options.agentSessionsRoot));
+  });
+
+  app.post("/api/agent/sessions", async (c) => {
+    if (!options.agentSessionsRoot) {
+      return c.json({ error: "agentSessionsRoot is not configured" }, 503);
+    }
+    return c.json(await createAgentSession(options.agentSessionsRoot, await c.req.json()), 201);
+  });
+
+  app.get("/api/agent/sessions/:id", async (c) => {
+    if (!options.agentSessionsRoot) {
+      return c.json({ error: "agentSessionsRoot is not configured" }, 503);
+    }
+    return c.json(await getAgentSession(options.agentSessionsRoot, c.req.param("id")));
+  });
+
+  app.get("/api/agent/sessions/:id/messages", async (c) => {
+    if (!options.agentSessionsRoot) {
+      return c.json({ error: "agentSessionsRoot is not configured" }, 503);
+    }
+    return c.json(await listAgentMessages(options.agentSessionsRoot, c.req.param("id")));
+  });
+
+  app.post("/api/agent/sessions/:id/messages", async (c) => {
+    if (!options.agentSessionsRoot) {
+      return c.json({ error: "agentSessionsRoot is not configured" }, 503);
+    }
+    return c.json(
+      await appendAgentMessage(options.agentSessionsRoot, c.req.param("id"), await c.req.json()),
+      201
+    );
+  });
+
+  app.get("/api/agent/sessions/:id/commands", async (c) => {
+    if (!options.agentSessionsRoot) {
+      return c.json({ error: "agentSessionsRoot is not configured" }, 503);
+    }
+    return c.json(await listAgentCommands(options.agentSessionsRoot, c.req.param("id")));
+  });
+
+  app.post("/api/agent/sessions/:id/commands", async (c) => {
+    if (!options.agentSessionsRoot) {
+      return c.json({ error: "agentSessionsRoot is not configured" }, 503);
+    }
+    return c.json(
+      await enqueueAgentCommand(options.agentSessionsRoot, c.req.param("id"), await c.req.json()),
+      201
+    );
+  });
+
+  app.get("/api/agent/sessions/:id/events", async (c) => {
+    if (!options.agentSessionsRoot) {
+      return c.json({ error: "agentSessionsRoot is not configured" }, 503);
+    }
+    return c.json(await listAgentEvents(options.agentSessionsRoot, c.req.param("id")));
+  });
+
+  app.post("/api/agent/sessions/:id/events", async (c) => {
+    if (!options.agentSessionsRoot) {
+      return c.json({ error: "agentSessionsRoot is not configured" }, 503);
+    }
+    return c.json(
+      await appendAgentEvent(options.agentSessionsRoot, c.req.param("id"), await c.req.json()),
+      201
+    );
+  });
+
+  app.get("/api/agent/sessions/:id/decisions", async (c) => {
+    if (!options.agentSessionsRoot) {
+      return c.json({ error: "agentSessionsRoot is not configured" }, 503);
+    }
+    return c.json(await listAgentDecisions(options.agentSessionsRoot, c.req.param("id")));
+  });
+
+  app.post("/api/agent/sessions/:id/decisions", async (c) => {
+    if (!options.agentSessionsRoot) {
+      return c.json({ error: "agentSessionsRoot is not configured" }, 503);
+    }
+    return c.json(
+      await openHumanDecision(options.agentSessionsRoot, c.req.param("id"), await c.req.json()),
+      201
+    );
+  });
+
+  app.post("/api/agent/sessions/:id/decisions/:decisionId/answer", async (c) => {
+    if (!options.agentSessionsRoot) {
+      return c.json({ error: "agentSessionsRoot is not configured" }, 503);
+    }
+    return c.json(
+      await answerHumanDecision(
+        options.agentSessionsRoot,
+        c.req.param("id"),
+        c.req.param("decisionId"),
+        await c.req.json()
+      ),
+      201
+    );
   });
 
   return app;

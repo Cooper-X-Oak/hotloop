@@ -229,6 +229,37 @@ button:disabled {
   background: #ffffff;
 }
 
+.agent-console {
+  display: grid;
+  gap: 14px;
+  width: min(1180px, calc(100% - 32px));
+  margin: 18px auto 0;
+}
+
+.agent-composer {
+  display: grid;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid #d8d6cf;
+  background: #ffffff;
+}
+
+.agent-composer span {
+  color: #6f6a5f;
+  font-size: 13px;
+}
+
+.agent-composer textarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid #d8d6cf;
+  color: #161616;
+  background: #f6f5f2;
+  font: inherit;
+  resize: vertical;
+}
+
 .focus-box h3 {
   margin-bottom: 8px;
 }

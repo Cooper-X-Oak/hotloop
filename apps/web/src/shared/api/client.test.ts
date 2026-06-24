@@ -18,6 +18,25 @@ describe("HotLoop API client", () => {
     await api.getArtifacts("2026-06-24");
     await api.getFeedback();
     await api.runScan("scan-1");
+    await api.createAgentSession({
+      id: "agent-1",
+      workspaceRoot: "D:/workspace",
+      agentAdapter: "local-cli:codex",
+      adapterPriority: ["local-cli:codex", "api-fallback"],
+      fallbackReason: null,
+      loadedHarness: ["AGENTS.md"]
+    });
+    await api.sendAgentMessage("agent-1", {
+      id: "msg-1",
+      role: "human",
+      content: "跑一轮近 6h 热点。"
+    });
+    await api.enqueueAgentCommand("agent-1", {
+      id: "cmd-1",
+      type: "run_loop",
+      payload: { freshnessWindowHours: 6 }
+    });
+    await api.answerAgentDecision("agent-1", "decision-1", { answer: "write_p0" });
     await api.recordFeedback({
       topicId: "topic-1",
       source: "sopilot-x-rss",
@@ -31,6 +50,10 @@ describe("HotLoop API client", () => {
       { url: "/api/artifacts?date=2026-06-24", method: "GET" },
       { url: "/api/feedback/sources", method: "GET" },
       { url: "/api/loops/hotspot/scan", method: "POST" },
+      { url: "/api/agent/sessions", method: "POST" },
+      { url: "/api/agent/sessions/agent-1/messages", method: "POST" },
+      { url: "/api/agent/sessions/agent-1/commands", method: "POST" },
+      { url: "/api/agent/sessions/agent-1/decisions/decision-1/answer", method: "POST" },
       { url: "/api/feedback/outcomes", method: "POST" }
     ]);
   });

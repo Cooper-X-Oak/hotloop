@@ -20,6 +20,7 @@ describe("demo runtime", () => {
     expect(runtime.modulesRoot).toBe(path.resolve("modules"));
     expect(runtime.runsRoot).toContain(path.join(".scratch", "demo", "runs"));
     expect(runtime.feedbackRoot).toContain(path.join(".scratch", "demo", "feedback"));
+    expect(runtime.agentSessionsRoot).toContain(path.join(".scratch", "demo", "agent-sessions"));
     expect(config.contentRoot).toContain(path.join(".scratch", "demo", "content"));
     expect(sources.map((source) => source.id)).toEqual([
       "sopilot-x-rss",

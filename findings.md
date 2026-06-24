@@ -171,3 +171,33 @@
 - The `/agent` surface should become the front door for instructing and steering the agent.
 - Existing workflow APIs should remain tool-level capabilities, but real cockpit operation should route through durable agent sessions.
 - Agent execution should bridge into local CLI first. API execution is fallback only and must record fallback reason.
+
+## Phase 17-18 Implemented State
+
+- `packages/agent` now provides a file-backed durable agent session store:
+  - `session.json`
+  - `messages.jsonl`
+  - `commands.jsonl`
+  - `events.jsonl`
+  - `decisions.jsonl`
+  - `tool-invocations.jsonl`
+  - `checkpoints/`
+  - `logs/`
+- Agent sessions record adapter selection metadata:
+  - `agentAdapter`
+  - `adapterPriority`
+  - `fallbackReason`
+- `apps/server` exposes agent session APIs for:
+  - session create/list/get
+  - message append/list
+  - command enqueue/list
+  - event append/list
+  - decision open/list/answer
+- Demo runtime now configures `agentSessionsRoot`, so local demo can exercise agent APIs.
+- `apps/web` now has `/agent` with:
+  - instruction composer
+  - session list
+  - transcript
+  - command queue
+  - human decision queue
+- Current implementation does not yet spawn or connect to a local CLI agent. That remains Phase 19.

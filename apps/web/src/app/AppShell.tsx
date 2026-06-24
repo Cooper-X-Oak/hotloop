@@ -15,6 +15,7 @@ export interface AppShellProps {
 }
 
 const NAV_ITEMS = [
+  { to: "/agent", label: "Agent" },
   { to: "/radar", label: "雷达台" },
   { to: "/topics", label: "选题工作台" },
   { to: "/runs", label: "运行账本" },

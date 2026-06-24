@@ -20,6 +20,7 @@ const fixture = {
 describe("routed HotLoop app", () => {
   it.each([
     ["/radar", "雷达台", "运行扫描"],
+    ["/agent", "Agent 交互台", "发送指令"],
     ["/topics", "选题工作台", "创建选题包"],
     ["/runs", "运行账本", "run-1"],
     ["/artifacts", "成品库", "成品文章"],

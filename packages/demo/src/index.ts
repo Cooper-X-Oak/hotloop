@@ -16,6 +16,7 @@ export interface DemoRuntimeConfig {
   scratchRoot: string;
   runsRoot: string;
   feedbackRoot: string;
+  agentSessionsRoot: string;
   modulesRoot: string;
   serverPort: number;
   webPort: number;
@@ -114,6 +115,7 @@ export async function prepareDemoRuntime(input: DemoRuntimeInput): Promise<DemoR
   const candidatesRoot = path.join(scratchRoot, "candidates");
   const runsRoot = path.join(demoRoot, "runs");
   const feedbackRoot = path.join(demoRoot, "feedback");
+  const agentSessionsRoot = path.join(demoRoot, "agent-sessions");
   const workspaceConfigPath = path.join(demoRoot, "workspace.local.json");
   const modulesRoot = path.join(repoRoot, "modules");
 
@@ -121,6 +123,7 @@ export async function prepareDemoRuntime(input: DemoRuntimeInput): Promise<DemoR
   await mkdir(candidatesRoot, { recursive: true });
   await mkdir(runsRoot, { recursive: true });
   await mkdir(feedbackRoot, { recursive: true });
+  await mkdir(agentSessionsRoot, { recursive: true });
 
   await writeFile(path.join(hotspotRoot, "信源.yaml"), toSourceYaml(DEMO_SOURCES), "utf8");
   await writeFile(
@@ -151,6 +154,7 @@ export async function prepareDemoRuntime(input: DemoRuntimeInput): Promise<DemoR
     scratchRoot,
     runsRoot,
     feedbackRoot,
+    agentSessionsRoot,
     modulesRoot,
     serverPort: input.serverPort ?? 8787,
     webPort: input.webPort ?? 5173

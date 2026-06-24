@@ -9,6 +9,7 @@
     "dev:demo": "tsx src/demo.ts"
   },
   "dependencies": {
+    "@hotloop/agent": "0.0.0",
     "@hotloop/adapters": "0.0.0",
     "@hotloop/demo": "0.0.0",
     "@hotloop/evidence": "0.0.0",

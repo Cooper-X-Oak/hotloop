@@ -114,3 +114,13 @@
   - local CLI agent bridge is the primary executor path
   - API execution is fallback only when CLI is unavailable
   - sessions must record adapter selection and fallback reason
+- Completed Phase 17 agent runtime contract foundation:
+  - added `packages/agent`
+  - added durable file-backed sessions, messages, commands, events, decisions, and tool invocation logs
+  - added server agent session APIs
+  - wired demo runtime with `agentSessionsRoot`
+- Completed Phase 18 minimal Agent Console:
+  - added `/agent` route
+  - added instruction composer, session list, transcript, command queue, and decision queue
+  - added frontend API client methods for agent session interactions
+  - verified `npm run check` with 21 test files and 53 tests

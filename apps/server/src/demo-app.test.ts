@@ -15,11 +15,26 @@ describe("demo server app", () => {
       headers: { "Content-Type": "application/json" }
     });
     const scan = await scanResponse.json();
+    const agentSessionResponse = await app.request("/api/agent/sessions", {
+      method: "POST",
+      body: JSON.stringify({
+        id: "demo-agent-test",
+        workspaceRoot: runtime.contentRoot,
+        agentAdapter: "local-cli:codex",
+        adapterPriority: ["local-cli:codex", "api-fallback"],
+        fallbackReason: null,
+        loadedHarness: ["AGENTS.md"]
+      }),
+      headers: { "Content-Type": "application/json" }
+    });
+    const agentSession = await agentSessionResponse.json();
 
     expect(runtime.workspaceConfigPath).toContain(path.join(".scratch", "demo"));
     expect(smoke.ok).toBe(true);
     expect(scanResponse.status).toBe(201);
     expect(scan.run.status).toBe("succeeded");
     expect(scan.candidates).toHaveLength(5);
+    expect(agentSessionResponse.status).toBe(201);
+    expect(agentSession.agentAdapter).toBe("local-cli:codex");
   });
 });

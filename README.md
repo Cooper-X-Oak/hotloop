@@ -43,6 +43,7 @@ packages/
   workspace/ # content vault reader/writer
   modules/   # module registry and execution contracts
   runner/    # durable run ledger and job runner
+  agent/     # durable agent sessions, commands, decisions, and tool invocation logs
   policy/    # AGENTS.md / skills / style policy loader
   adapters/  # existing script and platform adapters
 

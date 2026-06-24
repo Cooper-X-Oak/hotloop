@@ -206,6 +206,97 @@ describe("server API", () => {
     ]);
   });
 
+  it("exposes agent session, message, command, event, and decision APIs", async () => {
+    const fixture = await createFixtureWorkspace();
+    const agentSessionsRoot = await mkdtemp(path.join(tmpdir(), "hotloop-api-agent-"));
+    const app = createApp({ workspaceConfigPath: fixture.configPath, agentSessionsRoot });
+
+    const createResponse = await app.request("/api/agent/sessions", {
+      method: "POST",
+      body: JSON.stringify({
+        id: "agent-api-1",
+        workspaceRoot: "D:/workspace",
+        activeRunId: "run-api-1",
+        agentAdapter: "local-cli:codex",
+        adapterPriority: ["local-cli:codex", "api-fallback"],
+        fallbackReason: null,
+        loadedHarness: ["AGENTS.md"]
+      }),
+      headers: { "Content-Type": "application/json" }
+    });
+    const session = await createResponse.json();
+
+    const messageResponse = await app.request("/api/agent/sessions/agent-api-1/messages", {
+      method: "POST",
+      body: JSON.stringify({
+        id: "msg-api-1",
+        role: "human",
+        content: "跑一轮近 6h 热点。"
+      }),
+      headers: { "Content-Type": "application/json" }
+    });
+
+    const commandResponse = await app.request("/api/agent/sessions/agent-api-1/commands", {
+      method: "POST",
+      body: JSON.stringify({
+        id: "cmd-api-1",
+        type: "run_loop",
+        payload: { freshnessWindowHours: 6 }
+      }),
+      headers: { "Content-Type": "application/json" }
+    });
+
+    const eventResponse = await app.request("/api/agent/sessions/agent-api-1/events", {
+      method: "POST",
+      body: JSON.stringify({
+        type: "adapter_selected",
+        message: "Using local CLI",
+        data: { adapter: "local-cli:codex" }
+      }),
+      headers: { "Content-Type": "application/json" }
+    });
+
+    const decisionResponse = await app.request("/api/agent/sessions/agent-api-1/decisions", {
+      method: "POST",
+      body: JSON.stringify({
+        id: "decision-api-1",
+        runId: "run-api-1",
+        question: "先写哪个？",
+        recommendedAnswer: "先写 P0。",
+        options: ["write_p0", "skip"]
+      }),
+      headers: { "Content-Type": "application/json" }
+    });
+
+    const answerResponse = await app.request(
+      "/api/agent/sessions/agent-api-1/decisions/decision-api-1/answer",
+      {
+        method: "POST",
+        body: JSON.stringify({ answer: "write_p0" }),
+        headers: { "Content-Type": "application/json" }
+      }
+    );
+
+    const sessions = await (await app.request("/api/agent/sessions")).json();
+    const messages = await (await app.request("/api/agent/sessions/agent-api-1/messages")).json();
+    const commands = await (await app.request("/api/agent/sessions/agent-api-1/commands")).json();
+    const events = await (await app.request("/api/agent/sessions/agent-api-1/events")).json();
+    const decisions = await (await app.request("/api/agent/sessions/agent-api-1/decisions")).json();
+
+    expect(createResponse.status).toBe(201);
+    expect(session.agentAdapter).toBe("local-cli:codex");
+    expect(messageResponse.status).toBe(201);
+    expect(commandResponse.status).toBe(201);
+    expect(eventResponse.status).toBe(201);
+    expect(decisionResponse.status).toBe(201);
+    expect(answerResponse.status).toBe(201);
+    expect(sessions).toHaveLength(1);
+    expect(messages[0].content).toBe("跑一轮近 6h 热点。");
+    expect(commands[0].status).toBe("queued");
+    expect(events[0].type).toBe("adapter_selected");
+    expect(decisions[0]).toMatchObject({ status: "answered", answer: "write_p0" });
+  });
+
   it("exposes phase 9-13 workflow APIs", async () => {
     const fixture = await createFixtureWorkspace();
     const modulesRoot = await mkdtemp(path.join(tmpdir(), "hotloop-api-phase-modules-"));
