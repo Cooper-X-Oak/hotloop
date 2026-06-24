@@ -36,9 +36,8 @@ describe("radar console", () => {
     );
 
     expect(html).toContain("P0");
-    expect(html).toContain("X Explosive Posts");
+    expect(html).toContain("X 起爆贴");
     expect(html).toContain("Explosive X post");
     expect(html).toContain("Needs official confirmation");
   });
 });
-

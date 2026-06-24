@@ -90,3 +90,8 @@
   - added Vite `/api` proxy and web dev script
   - added root `npm run dev:demo`
   - verified `npm run check` with 17 test files and 41 tests
+- Upgraded the operation page into a Chinese workflow console:
+  - replaced English dashboard labels with Chinese product navigation
+  - mapped Radar, Topic, Evidence, Render, Publish, Feedback, and Runs to backend workflow actions
+  - added frontend handlers for scan, topic creation, evidence, article package, HTML render, WeChat draft, and feedback
+  - verified `npm run check` with 17 test files and 41 tests

@@ -26,9 +26,16 @@ body {
 }
 
 .brand {
-  margin: 0 0 24px;
+  margin: 0 0 6px;
   font-size: 20px;
   font-weight: 800;
+}
+
+.side-note {
+  margin: 0 0 22px;
+  color: #6f6a5f;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .sidebar nav {
@@ -52,6 +59,44 @@ body {
   min-width: 0;
 }
 
+.workflow-overview {
+  display: flex;
+  justify-content: space-between;
+  gap: 24px;
+  align-items: end;
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0 22px;
+  border-bottom: 1px solid #d8d6cf;
+}
+
+.workflow-overview h1 {
+  margin-bottom: 0;
+}
+
+.status-strip {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(92px, auto));
+  gap: 8px;
+}
+
+.status-pill {
+  padding: 10px 12px;
+  border: 1px solid #d8d6cf;
+  background: #ffffff;
+}
+
+.status-pill span {
+  display: block;
+  margin-bottom: 3px;
+  color: #6f6a5f;
+  font-size: 12px;
+}
+
+.status-pill strong {
+  font-size: 17px;
+}
+
 .view {
   border-bottom: 1px solid #d8d6cf;
 }
@@ -62,9 +107,151 @@ body {
   padding: 32px 0;
 }
 
+#radar {
+  padding-bottom: 16px;
+}
+
+.workflow-header {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) auto;
+  gap: 14px;
+  align-items: center;
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 28px 0 0;
+}
+
+.step-badge {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  height: 46px;
+  background: #111827;
+  color: #ffffff;
+  font-weight: 800;
+}
+
+.workflow-header h2 {
+  margin: 0 0 4px;
+  font-size: 24px;
+}
+
+.workflow-header p {
+  margin: 0;
+  color: #6f6a5f;
+}
+
+.workflow-action {
+  justify-self: end;
+}
+
 .view-header h2 {
   margin-bottom: 16px;
   font-size: 24px;
+}
+
+button {
+  min-height: 36px;
+  padding: 8px 12px;
+  border: 1px solid #1f2937;
+  background: #ffffff;
+  color: #111827;
+  font: inherit;
+  cursor: pointer;
+}
+
+button:hover:not(:disabled) {
+  background: #111827;
+  color: #ffffff;
+}
+
+button:disabled {
+  cursor: not-allowed;
+  color: #9a9489;
+  border-color: #d8d6cf;
+  background: #eeeae2;
+}
+
+.primary-action {
+  background: #111827;
+  color: #ffffff;
+}
+
+.primary-action:hover:not(:disabled) {
+  background: #2f3a4a;
+}
+
+.split-panel {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(280px, 0.8fr);
+  gap: 14px;
+}
+
+.split-panel h3 {
+  margin-bottom: 12px;
+}
+
+.action-list {
+  display: grid;
+  gap: 8px;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+}
+
+.action-list li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 14px;
+  border: 1px solid #e4e1da;
+  background: #ffffff;
+}
+
+.action-list span {
+  display: block;
+  margin-top: 4px;
+  color: #6f6a5f;
+  font-size: 13px;
+}
+
+.focus-box,
+.command-card {
+  padding: 16px;
+  border: 1px solid #d8d6cf;
+  background: #ffffff;
+}
+
+.focus-box h3 {
+  margin-bottom: 8px;
+}
+
+.focus-box p:last-child,
+.command-card p:last-child {
+  margin-bottom: 0;
+}
+
+.command-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.command-card {
+  display: grid;
+  align-content: space-between;
+  gap: 14px;
+  min-height: 150px;
+}
+
+.command-card h3 {
+  margin-bottom: 0;
+  font-size: 18px;
+}
+
+.command-card p {
+  color: #6f6a5f;
 }
 
 .table-list {
@@ -83,6 +270,18 @@ body {
   padding: 12px 14px;
   border: 1px solid #e4e1da;
   background: #ffffff;
+}
+
+.activity-log {
+  display: grid;
+  gap: 8px;
+  padding-left: 22px;
+  margin: 0;
+}
+
+.activity-log li {
+  padding: 8px 0;
+  color: #4d4a43;
 }
 
 .shell {
@@ -224,8 +423,32 @@ h1 {
   }
 
   .sidebar nav {
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(6, minmax(94px, 1fr));
     overflow-x: auto;
+  }
+
+  .workflow-overview,
+  .workflow-header {
+    display: block;
+  }
+
+  .status-strip,
+  .split-panel,
+  .command-grid {
+    grid-template-columns: 1fr;
+    margin-top: 16px;
+  }
+
+  .step-badge {
+    margin-bottom: 12px;
+  }
+
+  .workflow-action {
+    margin-top: 14px;
+  }
+
+  .action-list li {
+    grid-template-columns: 1fr;
   }
 
   .table-list li {

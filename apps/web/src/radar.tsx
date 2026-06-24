@@ -10,28 +10,28 @@ export interface RadarLane {
 const LANE_DEFINITIONS: Array<Omit<RadarLane, "candidates">> = [
   {
     id: "P0",
-    title: "X Explosive Posts",
-    description: "X hot takes, official accounts, and product-lead comments."
+    title: "X 起爆贴",
+    description: "X 热帖、官方账号、产品负责人的高时效信号。"
   },
   {
     id: "P1",
-    title: "GitHub Velocity",
-    description: "Trending repositories and open-source momentum."
+    title: "GitHub 速度",
+    description: "Trending 仓库、开源项目增长和开发者采用信号。"
   },
   {
     id: "P2",
-    title: "International Community",
-    description: "HN, Reddit, Product Hunt, Techmeme, and other global discussions."
+    title: "国际社区热点",
+    description: "HN、Reddit、Product Hunt、Techmeme 等全球讨论。"
   },
   {
     id: "P3",
-    title: "Official Updates",
-    description: "Company blogs, release notes, API updates, and policy changes."
+    title: "官方更新",
+    description: "公司博客、发布说明、API 更新和政策变化。"
   },
   {
     id: "P4",
-    title: "Paper Signals",
-    description: "Recent papers capped to items with product or developer impact."
+    title: "论文信号",
+    description: "一周内且对产品或开发者有潜在影响的论文。"
   }
 ];
 
@@ -51,15 +51,15 @@ export function RadarPage({ candidates }: { candidates: Candidate[] }) {
     <main className="shell">
       <header className="hero">
         <div>
-          <p className="eyebrow">HotLoop Radar</p>
-          <h1>AI technology signal desk</h1>
+          <p className="eyebrow">HotLoop 雷达</p>
+          <h1>AI 热点信号台</h1>
           <p className="summary">
-            Fresh source-first radar for deciding what is worth writing now.
+            先看高时效信号，再决定现在最值得写什么。
           </p>
         </div>
         <dl className="stats">
           <div>
-            <dt>Candidates</dt>
+            <dt>候选</dt>
             <dd>{total}</dd>
           </div>
           <div>
@@ -81,7 +81,7 @@ export function RadarPage({ candidates }: { candidates: Candidate[] }) {
             </header>
 
             {lane.candidates.length === 0 ? (
-              <p className="empty">No candidates in this lane.</p>
+              <p className="empty">当前分组暂无候选。</p>
             ) : (
               <ul>
                 {lane.candidates.map((candidate) => (
@@ -91,12 +91,12 @@ export function RadarPage({ candidates }: { candidates: Candidate[] }) {
                     {candidate.summary ? <p>{candidate.summary}</p> : null}
                     {candidate.whyItMatters ? (
                       <p>
-                        <strong>Why it matters:</strong> {candidate.whyItMatters}
+                        <strong>为什么重要：</strong> {candidate.whyItMatters}
                       </p>
                     ) : null}
                     {candidate.risk ? (
                       <p>
-                        <strong>Risk:</strong> {candidate.risk}
+                        <strong>风险：</strong> {candidate.risk}
                       </p>
                     ) : null}
                   </li>
@@ -109,4 +109,3 @@ export function RadarPage({ candidates }: { candidates: Candidate[] }) {
     </main>
   );
 }
-

@@ -101,3 +101,15 @@
   - `npm run dev:demo:server`
   - `npm run dev:demo:web`
 - Current full verification after Phase 15: 17 test files, 41 tests, typecheck, and all workspace builds pass.
+
+## Chinese Workflow Console Upgrade
+
+- The previous UI was a read-only section dashboard with anchor navigation.
+- The upgraded UI is a Chinese workflow console:
+  - `雷达台`: reads candidates and can trigger `POST /api/loops/hotspot/scan`.
+  - `选题工作台`: can create topic packages from candidate cards.
+  - `证据与成稿`: can write evidence, create article packages, and render HTML.
+  - `运行账本`: reads durable runs.
+  - `成品与发布`: reads final HTML artifacts and can create WeChat drafts.
+  - `反馈学习`: reads source performance and can record a demo outcome.
+- The left navigation still uses in-page anchors, but each section now contains workflow actions mapped to backend APIs.
