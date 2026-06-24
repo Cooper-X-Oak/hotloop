@@ -63,6 +63,10 @@
   - added `runRadarModules`
   - writes normalized candidate cache
   - added first-party P0-P4 radar module manifests
+- Completed durable hotspot scan loop runner:
+  - added `packages/loop`
+  - creates durable runs, writes scan checkpoints, registers candidate artifacts, and marks successful runs
+  - exposed `POST /api/loops/hotspot/scan`
 - Completed Phase 11 evidence collector foundation:
   - added `packages/evidence`
   - writes evidence pack JSON, source snapshots, and public analysis

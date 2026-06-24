@@ -209,6 +209,7 @@ describe("server API", () => {
   it("exposes phase 9-13 workflow APIs", async () => {
     const fixture = await createFixtureWorkspace();
     const modulesRoot = await mkdtemp(path.join(tmpdir(), "hotloop-api-phase-modules-"));
+    const runsRoot = await mkdtemp(path.join(tmpdir(), "hotloop-api-phase-runs-"));
     const moduleRoot = path.join(modulesRoot, "sopilot-x");
     await mkdir(moduleRoot, { recursive: true });
     await writeFile(
@@ -219,6 +220,7 @@ describe("server API", () => {
     const app = createApp({
       workspaceConfigPath: fixture.configPath,
       repoRoot: await mkdtemp(path.join(tmpdir(), "hotloop-api-repo-")),
+      runsRoot,
       modulesRoot,
       radarHandlers: {
         "sopilot-x": async () => [
@@ -240,6 +242,12 @@ describe("server API", () => {
 
     const smoke = await (await app.request("/api/smoke")).json();
     const radarRun = await (await app.request("/api/radar/run", { method: "POST" })).json();
+    const loopRunResponse = await app.request("/api/loops/hotspot/scan", {
+      method: "POST",
+      body: JSON.stringify({ id: "api-loop-1" }),
+      headers: { "Content-Type": "application/json" }
+    });
+    const loopRun = await loopRunResponse.json();
     await app.request("/api/topics", {
       method: "POST",
       body: JSON.stringify({
@@ -289,6 +297,9 @@ describe("server API", () => {
 
     expect(smoke.ok).toBe(true);
     expect(radarRun.candidates).toHaveLength(1);
+    expect(loopRunResponse.status).toBe(201);
+    expect(loopRun.run.status).toBe("succeeded");
+    expect(loopRun.candidates).toHaveLength(1);
     expect(evidenceResponse.status).toBe(201);
     expect(renderResponse.status).toBe(201);
     expect(rendered.fileName).toBe("2026-06-24-x-post.html");

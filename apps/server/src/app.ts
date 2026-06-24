@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { createWeChatDraftThroughApi, type WeChatApiClient } from "@hotloop/adapters";
 import { writeEvidencePack } from "@hotloop/evidence";
 import { recordTopicOutcome, summarizeSourcePerformance } from "@hotloop/feedback";
+import { runHotspotScanLoop } from "@hotloop/loop";
 import { listEnabledModules, runRadarModules, type RadarModuleHandler } from "@hotloop/modules";
 import { renderArticleHtml } from "@hotloop/render";
 import { createRun, listRuns } from "@hotloop/runner";
@@ -115,6 +116,27 @@ export function createApp(options: CreateAppOptions) {
         modulesRoot: options.modulesRoot,
         scratchRoot: workspace.scratchRoot,
         handlers: options.radarHandlers ?? {}
+      }),
+      201
+    );
+  });
+
+  app.post("/api/loops/hotspot/scan", async (c) => {
+    if (!options.runsRoot) {
+      return c.json({ error: "runsRoot is not configured" }, 503);
+    }
+    if (!options.modulesRoot) {
+      return c.json({ error: "modulesRoot is not configured" }, 503);
+    }
+    const input = await c.req.json();
+    return c.json(
+      await runHotspotScanLoop({
+        id: input.id,
+        runsRoot: options.runsRoot,
+        modulesRoot: options.modulesRoot,
+        workspaceConfigPath: options.workspaceConfigPath,
+        loopDefinition: input.loopDefinition ?? "loops/hotspot-writing-loop.yaml",
+        radarHandlers: options.radarHandlers ?? {}
       }),
       201
     );

@@ -11,6 +11,7 @@
     "@hotloop/adapters": "0.0.0",
     "@hotloop/evidence": "0.0.0",
     "@hotloop/feedback": "0.0.0",
+    "@hotloop/loop": "0.0.0",
     "@hotloop/modules": "0.0.0",
     "@hotloop/render": "0.0.0",
     "@hotloop/runner": "0.0.0",

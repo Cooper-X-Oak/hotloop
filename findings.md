@@ -51,6 +51,12 @@
 
 - `packages/smoke` validates an external content vault path without importing private content into the product repo.
 - `packages/modules` now has `runRadarModules`, which executes enabled radar modules through injected handlers and writes normalized candidates to `scratchRoot/candidates/latest.json`.
+- `packages/loop` now runs a minimal durable hotspot scan loop:
+  - creates a run
+  - executes radar modules
+  - writes a scan checkpoint
+  - registers candidate artifacts
+  - marks the run as `succeeded`
 - First-party module manifests now cover P0-P4:
   - `sopilot-x-rss` for P0
   - `github-trending` for P1
@@ -63,6 +69,7 @@
 - `apps/server` exposes Phase 9-13 workflow APIs:
   - `GET /api/smoke`
   - `POST /api/radar/run`
+  - `POST /api/loops/hotspot/scan`
   - `POST /api/topics/:date/:slug/evidence`
   - `POST /api/topics/:date/:slug/render`
   - `POST /api/publish/wechat/draft`

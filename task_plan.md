@@ -49,6 +49,7 @@ All phases through Phase 14 complete for the runnable local product foundation.
 - `packages/evidence`: evidence pack writer and source snapshot helpers
 - `packages/render`: markdown-to-HTML renderer for final artifacts
 - `packages/smoke`: workspace smoke test helpers
+- `packages/loop`: durable hotspot loop runner
 
 ## Planned Apps
 
@@ -92,3 +93,4 @@ These commands must exist before implementation is considered complete.
 | Missing WeChat API integration function caused RED test failure | Phase 13 RED | Added `createWeChatDraftThroughApi` |
 | Missing product console caused RED test failure | Phase 14 RED | Added `ProductConsole` and multi-view UI |
 | Missing server workflow APIs caused RED test failure | Phase 9-13 API RED | Added smoke, radar run, evidence, render, and WeChat draft routes |
+| Missing durable loop runner caused RED test failure | Phase 10 runner RED | Added `packages/loop` and `/api/loops/hotspot/scan` |
