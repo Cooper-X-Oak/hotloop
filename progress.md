@@ -95,3 +95,11 @@
   - mapped Radar, Topic, Evidence, Render, Publish, Feedback, and Runs to backend workflow actions
   - added frontend handlers for scan, topic creation, evidence, article package, HTML render, WeChat draft, and feedback
   - verified `npm run check` with 17 test files and 41 tests
+- Started Phase 16 production frontend IA refactor:
+  - goal is to replace one-page anchor navigation with app shell, routes, feature pages, and shared API client
+- Completed Phase 16 production frontend IA refactor:
+  - added React Router app shell
+  - split Radar, Topics, Evidence, Runs, Artifacts, Publish, and Feedback into feature pages
+  - moved backend calls into a shared HotLoop API client
+  - reduced `main.tsx` to router mounting
+  - verified `npm run check` with 20 test files and 49 tests

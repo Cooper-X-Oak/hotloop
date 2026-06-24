@@ -113,3 +113,34 @@
   - `成品与发布`: reads final HTML artifacts and can create WeChat drafts.
   - `反馈学习`: reads source performance and can record a demo outcome.
 - The left navigation still uses in-page anchors, but each section now contains workflow actions mapped to backend APIs.
+
+## Phase 16 Direction
+
+- The current Chinese workflow console proves end-to-end behavior but is still one page with anchor navigation.
+- Production frontend IA should split the product into an app shell plus routed feature pages:
+  - `/radar`
+  - `/topics`
+  - `/runs`
+  - `/artifacts`
+  - `/publish`
+  - `/feedback`
+- API calls should move out of `main.tsx` into a shared client layer.
+- Each feature page should own its view composition while shared workflow state remains in the app controller.
+
+## Phase 16 Implemented State
+
+- `apps/web/src/main.tsx` now only mounts `BrowserRouter` and `HotLoopApp`.
+- `apps/web/src/app/AppShell.tsx` owns product shell navigation, summary state, and activity log.
+- `apps/web/src/app/App.tsx` owns shared workflow state and route composition.
+- `apps/web/src/shared/api/client.ts` centralizes backend API reads and workflow actions.
+- Feature pages are split under `apps/web/src/features/`:
+  - `radar/RadarRoute.tsx`
+  - `topics/TopicsRoute.tsx`
+  - `evidence/EvidenceRoute.tsx`
+  - `runs/RunsRoute.tsx`
+  - `artifacts/ArtifactsRoute.tsx`
+  - `publish/PublishRoute.tsx`
+  - `feedback/FeedbackRoute.tsx`
+- Routes now cover `/radar`, `/topics`, `/evidence`, `/runs`, `/artifacts`, `/publish`, and `/feedback`.
+- `react-router-dom` is declared as a direct dependency of `@hotloop/web`.
+- Current full verification after Phase 16: 20 test files, 49 tests, typecheck, and all workspace builds pass.

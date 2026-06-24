@@ -55,6 +55,12 @@ body {
   background: #f6f5f2;
 }
 
+.sidebar a.active {
+  border-color: #111827;
+  background: #111827;
+  color: #ffffff;
+}
+
 .workspace {
   min-width: 0;
 }

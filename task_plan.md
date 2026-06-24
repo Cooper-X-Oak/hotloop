@@ -1,14 +1,14 @@
-# Task Plan: HotLoop Phase 1 to Phase 15
+# Task Plan: HotLoop Phase 1 to Phase 16
 
 ## Goal
 
-Build HotLoop from the current Phase 0 product guardrails into a runnable local-first agentic content workspace through Phase 15.
+Build HotLoop from the current Phase 0 product guardrails into a runnable local-first agentic content workspace through Phase 16.
 
 Phase 0-8 established the minimal product skeleton. Phase 9-14 should connect the skeleton into a usable local product path without violating the core boundaries: content vault remains external, runs are durable, modules are filesystem-based, browser/source collection is explicit, and publishing remains draft-only.
 
 ## Current Phase
 
-All phases through Phase 15 complete for the browser-testable local product foundation.
+All phases through Phase 16 complete for the routed production frontend IA foundation.
 
 ## Phase Checklist
 
@@ -28,6 +28,7 @@ All phases through Phase 15 complete for the browser-testable local product foun
 - [x] Phase 13: WeChat draft integration layer
 - [x] Phase 14: Product UI views for radar, runs, artifacts, publish, and feedback
 - [x] Phase 15: Local demo runtime and one-command operation page
+- [x] Phase 16: Production frontend IA with app shell, routes, feature pages, and API client
 
 ## Implementation Strategy
 
@@ -97,3 +98,4 @@ These commands must exist before implementation is considered complete.
 | Missing server workflow APIs caused RED test failure | Phase 9-13 API RED | Added smoke, radar run, evidence, render, and WeChat draft routes |
 | Missing durable loop runner caused RED test failure | Phase 10 runner RED | Added `packages/loop` and `/api/loops/hotspot/scan` |
 | Missing demo runtime caused RED test failure | Phase 15 RED | Added `packages/demo`, demo server entry, Vite proxy, and `npm run dev:demo` |
+| Missing routed app shell and API client caused RED test failure | Phase 16 RED | Added React Router app shell, feature pages, and shared API client |
