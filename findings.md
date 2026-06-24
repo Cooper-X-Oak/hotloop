@@ -74,4 +74,4 @@
   - `POST /api/topics/:date/:slug/render`
   - `POST /api/publish/wechat/draft`
 - `apps/web` now renders a multi-view product console with Radar, Runs, Artifacts, Publish, and Feedback sections.
-- Current full verification after Phase 14: 13 test files, 36 tests, typecheck, and all workspace builds pass.
+- Current full verification after Phase 14: 14 test files, 37 tests, typecheck, and all workspace builds pass.
