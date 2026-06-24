@@ -1,0 +1,166 @@
+id: hotspot-writing-loop
+name: AI technology hotspot writing loop
+version: 0.1.0
+description: >
+  Detect fresh AI and technology hotspots, classify candidates into lanes,
+  turn a selected topic into an evidence-backed article package, render a final
+  HTML artifact, and optionally prepare a human-reviewed platform draft.
+
+mode:
+  localFirst: true
+  humanReviewedPublishing: true
+  autoPublish: false
+
+inputs:
+  workspaceConfig: config/workspace.local.json
+  sourceRegistry: external-workspace
+  moduleRegistry: modules/
+  policyDocs:
+    - AGENTS.md
+    - external-workspace/AGENTS.md
+    - external-workspace/hotspot-tracking/AGENTS.md
+
+policy:
+  freshness:
+    preferredHours: 6
+    fallbackHours: 24
+    maxFallbackHours: 48
+    paperMaxDays: 7
+  lanes:
+    - id: P0
+      name: X explosive posts and product-lead comments
+      required: true
+    - id: P1
+      name: GitHub and open-source velocity
+    - id: P2
+      name: International AI community hotspots
+    - id: P3
+      name: Official product updates
+    - id: P4
+      name: Paper signals
+      cap: 5
+  evidence:
+    levels:
+      - L1
+      - L2
+      - L3
+    rule: Do not promote L3 claims into article facts.
+
+steps:
+  - id: scan
+    name: Scan hotspot sources
+    kind: moduleFanout
+    uses: radar.*
+    outputs:
+      - candidatePool
+    checkpoint: true
+
+  - id: classify
+    name: Classify candidates into P0-P4 lanes
+    kind: deterministicOrAgent
+    requires:
+      - candidatePool
+    outputs:
+      - candidateLanes
+    checkpoint: true
+
+  - id: select_topic
+    name: Select topic
+    kind: agentDecision
+    requires:
+      - candidateLanes
+    rules:
+      - P0 must be reviewed before selecting lower lanes.
+      - Avoid duplicate topics already represented in the workspace.
+    outputs:
+      - selectedTopic
+    checkpoint: true
+
+  - id: collect_evidence
+    name: Collect evidence
+    kind: moduleFanout
+    uses: evidence.*
+    requires:
+      - selectedTopic
+    outputs:
+      - evidencePack
+    checkpoint: true
+
+  - id: analyze
+    name: Build public analysis
+    kind: agent
+    requires:
+      - evidencePack
+    outputs:
+      - publicAnalysis
+    checkpoint: true
+
+  - id: write
+    name: Write first draft
+    kind: adapter
+    uses: writer.primary
+    requires:
+      - publicAnalysis
+    outputs:
+      - articleDraft
+    checkpoint: true
+
+  - id: polish
+    name: Polish style and fact boundaries
+    kind: agent
+    requires:
+      - articleDraft
+      - publicAnalysis
+    outputs:
+      - articleReady
+    checkpoint: true
+
+  - id: plan_images
+    name: Create image plan
+    kind: agent
+    requires:
+      - articleReady
+    outputs:
+      - imagePlan
+    checkpoint: true
+
+  - id: generate_images
+    name: Generate image assets
+    kind: adapter
+    uses: media.primary
+    requires:
+      - imagePlan
+    outputs:
+      - imageAssets
+    checkpoint: true
+
+  - id: render
+    name: Render final HTML artifact
+    kind: adapter
+    uses: renderer.primary
+    requires:
+      - articleReady
+      - imageAssets
+    outputs:
+      - finalHtml
+    checkpoint: true
+
+  - id: publish_draft
+    name: Prepare platform draft
+    kind: optionalAdapter
+    uses: publisher.primary
+    requires:
+      - finalHtml
+    outputs:
+      - draftResult
+    checkpoint: true
+
+terminalStates:
+  success:
+    - artifact_ready
+    - draft_created
+  blocked:
+    - waiting_for_credentials
+    - waiting_for_user_review
+    - source_access_unavailable
+

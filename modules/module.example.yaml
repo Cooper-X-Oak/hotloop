@@ -1,0 +1,30 @@
+id: example-radar
+type: radar
+name: Example Radar Module
+version: 0.1.0
+enabled: false
+
+lane: P2
+freshnessWindowHours: 6
+
+requires:
+  - network
+
+entrypoints:
+  fetch: fetch.ts
+  normalize: normalize.ts
+
+outputs:
+  - Candidate[]
+
+policy:
+  - docs/module-system.md
+
+health:
+  timeoutMs: 30000
+  retryCount: 1
+
+notes: >
+  Copy this manifest when adding a new radar source. Keep source-specific logic
+  inside the module and normalize output into the shared Candidate shape.
+
