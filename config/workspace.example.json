@@ -1,0 +1,7 @@
+{
+  "workspaceName": "content-vault",
+  "contentRoot": "D:/path/to/content-vault",
+  "hotspotRoot": "D:/path/to/content-vault/hotspot-tracking",
+  "scratchRoot": "D:/path/to/content-vault/.scratch/hotloop"
+}
+
