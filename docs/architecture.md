@@ -43,6 +43,7 @@ Agent Cockpit UI
 
 7. Agent Runtime Boundary
    Agent sessions, messages, commands, tool invocations, human decisions, and bridge adapters.
+   Agent loop runs, turns, output ingestion, heartbeat, and status projection.
 
 8. Agent Interaction Surface
    Chat-style instruction input, structured quick commands, decision queue, tool timeline, and active run inspector.
@@ -118,7 +119,7 @@ Human
   -> Agent Session API
   -> Agent Runtime Boundary
   -> local CLI agent executor
-  -> API fallback only if CLI is unavailable
+  -> local CLI diagnostics if executor is unavailable
   -> HotLoop tool registry
   -> durable run ledger and workspace artifacts
 ```
@@ -136,6 +137,9 @@ ToolInvocation
 HumanDecision
 HarnessContext
 AgentAdapterSelection
+AgentLoopRun
+AgentTurn
+OutputIngestionResult
 ```
 
 Required UI surfaces:
@@ -166,7 +170,7 @@ POST /api/agent/sessions/:id/decisions/:decisionId/answer
 
 The existing direct workflow APIs can remain for demo and tool-level testing, but real cockpit operation should route through an agent session so actions are explainable and resumable.
 
-Agent execution must prefer a local CLI bridge. API-based model execution is a fallback path and must be recorded as such in session metadata and events.
+Agent execution must use local CLI bridges such as Codex CLI or Claude CLI. If no configured CLI is available, HotLoop records `local_cli_unavailable` and shows the configuration/error state; it must not call a model/provider API executor.
 
 ## Storage Policy
 
@@ -229,6 +233,11 @@ GET  /api/agent/sessions/:id/events
 POST /api/agent/sessions/:id/commands
 GET  /api/agent/sessions/:id/commands
 POST /api/agent/sessions/:id/commands/:commandId/local-cli/run
+POST /api/agent/sessions/:id/loop-runs
+GET  /api/agent/sessions/:id/loop-runs
+GET  /api/agent/sessions/:id/loop-runs/:loopRunId
+POST /api/agent/sessions/:id/loop-runs/:loopRunId/turns
+GET  /api/agent/sessions/:id/loop-runs/:loopRunId/turns
 GET  /api/agent/sessions/:id/decisions
 POST /api/agent/sessions/:id/decisions/:decisionId/answer
 POST /api/agent/sessions/:id/cancel

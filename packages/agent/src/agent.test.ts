@@ -7,8 +7,12 @@ import {
   appendAgentEvent,
   appendAgentMessage,
   createAgentSession,
+  createAgentLoopRun,
   enqueueAgentCommand,
   getAgentSession,
+  getAgentLoopRun,
+  listAgentLoopRuns,
+  listAgentTurns,
   listAgentCommands,
   listAgentDecisions,
   listAgentEvents,
@@ -18,6 +22,7 @@ import {
   nodeLocalCliRunner,
   openHumanDecision,
   recordToolInvocation,
+  runAgentLoopTurn,
   runLocalCliAgentCommand
 } from "./index.js";
 
@@ -47,8 +52,8 @@ describe("agent session store", () => {
       workspaceRoot: "D:/workspace",
       activeRunId: "run-1",
       agentAdapter: "local-cli:codex",
-      adapterPriority: ["local-cli:codex", "api-fallback"],
-      fallbackReason: null,
+      cliAdapterPriority: ["local-cli:codex"],
+      cliUnavailableReason: null,
       loadedHarness: ["AGENTS.md", "loops/hotspot-writing-loop.yaml"]
     });
 
@@ -59,9 +64,9 @@ describe("agent session store", () => {
 
     expect(session.status).toBe("idle");
     expect(stored.agentAdapter).toBe("local-cli:codex");
-    expect(stored.fallbackReason).toBeNull();
+    expect(stored.cliUnavailableReason).toBeNull();
     expect(sessions.map((item) => item.id)).toEqual(["agent-1"]);
-    expect(sessionJson).toContain("adapterPriority");
+    expect(sessionJson).toContain("cliAdapterPriority");
     expect(messages).toBe("");
   });
 
@@ -71,8 +76,8 @@ describe("agent session store", () => {
       id: "agent-2",
       workspaceRoot: "D:/workspace",
       agentAdapter: "local-cli:codex",
-      adapterPriority: ["local-cli:codex", "api-fallback"],
-      fallbackReason: null,
+      cliAdapterPriority: ["local-cli:codex"],
+      cliUnavailableReason: null,
       loadedHarness: []
     });
 
@@ -135,8 +140,8 @@ describe("agent session store", () => {
       id: "agent-cli",
       workspaceRoot: "D:/workspace",
       agentAdapter: "local-cli:codex",
-      adapterPriority: ["local-cli:codex", "api-fallback"],
-      fallbackReason: null,
+      cliAdapterPriority: ["local-cli:codex"],
+      cliUnavailableReason: null,
       loadedHarness: ["AGENTS.md", "loops/hotspot-writing-loop.yaml"]
     });
     await appendAgentMessage(sessionsRoot, "agent-cli", {
@@ -188,14 +193,14 @@ describe("agent session store", () => {
     ]);
   });
 
-  it("records local CLI unavailability without silently switching to API fallback", async () => {
+  it("records local CLI unavailability without switching to API execution", async () => {
     const sessionsRoot = await createSessionsRoot();
     await createAgentSession(sessionsRoot, {
       id: "agent-cli-missing",
       workspaceRoot: "D:/workspace",
       agentAdapter: "local-cli:codex",
-      adapterPriority: ["local-cli:codex", "api-fallback"],
-      fallbackReason: null,
+      cliAdapterPriority: ["local-cli:codex"],
+      cliUnavailableReason: null,
       loadedHarness: ["AGENTS.md"]
     });
     await enqueueAgentCommand(sessionsRoot, "agent-cli-missing", {
@@ -224,8 +229,83 @@ describe("agent session store", () => {
     expect(result.exitCode).toBeNull();
     expect(session.status).toBe("failed");
     expect(session.agentAdapter).toBe("local-cli:codex");
-    expect(session.fallbackReason).toBeNull();
+    expect(session.cliUnavailableReason).toContain("spawn codex ENOENT");
     expect(events.map((event) => event.type)).toContain("local_cli_unavailable");
     expect(events.map((event) => event.type)).not.toContain("api_fallback_selected");
+  });
+
+  it("runs an agent loop turn and ingests CLI stdout into transcript and loop state", async () => {
+    const sessionsRoot = await createSessionsRoot();
+    await createAgentSession(sessionsRoot, {
+      id: "agent-loop",
+      workspaceRoot: "D:/workspace",
+      agentAdapter: "local-cli:codex",
+      cliAdapterPriority: ["local-cli:codex"],
+      cliUnavailableReason: null,
+      loadedHarness: ["AGENTS.md", "loops/hotspot-writing-loop.yaml"]
+    });
+    await appendAgentMessage(sessionsRoot, "agent-loop", {
+      id: "msg-loop",
+      role: "human",
+      content: "跑近 6h AI 热点。"
+    });
+    await enqueueAgentCommand(sessionsRoot, "agent-loop", {
+      id: "cmd-loop",
+      type: "run_loop",
+      payload: { instruction: "跑近 6h AI 热点。" }
+    });
+
+    const loop = await createAgentLoopRun(sessionsRoot, "agent-loop", {
+      id: "loop-1",
+      loopDefinition: "loops/hotspot-writing-loop.yaml",
+      currentStep: "load_harness",
+      currentTask: "准备上下文",
+      progress: {
+        completedSteps: [],
+        activeStep: "load_harness",
+        pendingSteps: ["scan_sources", "classify_candidates"]
+      }
+    });
+    const result = await runAgentLoopTurn(sessionsRoot, "agent-loop", "loop-1", "cmd-loop", {
+      executable: "codex",
+      args: ["exec"],
+      cwd: "D:/workspace",
+      runner: async () => ({
+        exitCode: 0,
+        stdout: [
+          JSON.stringify({ type: "agent_message", content: "收到，我正在扫描 P0 X 起爆贴。" }),
+          JSON.stringify({
+            type: "status",
+            currentStep: "scan_sources",
+            currentTask: "collect_p0_x_posts"
+          })
+        ].join("\n"),
+        stderr: ""
+      })
+    });
+
+    const loops = await listAgentLoopRuns(sessionsRoot, "agent-loop");
+    const updatedLoop = await getAgentLoopRun(sessionsRoot, "agent-loop", "loop-1");
+    const turns = await listAgentTurns(sessionsRoot, "agent-loop", "loop-1");
+    const messages = await listAgentMessages(sessionsRoot, "agent-loop");
+    const events = await listAgentEvents(sessionsRoot, "agent-loop");
+    const heartbeat = await readFile(
+      path.join(sessionsRoot, "agent-loop", "loop-runs", "loop-1", "heartbeat.json"),
+      "utf8"
+    );
+
+    expect(loop.status).toBe("queued");
+    expect(result.loop.status).toBe("running");
+    expect(loops.map((item) => item.id)).toEqual(["loop-1"]);
+    expect(updatedLoop.currentStep).toBe("scan_sources");
+    expect(updatedLoop.currentTask).toBe("collect_p0_x_posts");
+    expect(turns).toHaveLength(1);
+    expect(turns[0]).toMatchObject({ status: "succeeded", commandId: "cmd-loop" });
+    expect(messages.at(-1)).toMatchObject({
+      role: "agent",
+      content: "收到，我正在扫描 P0 X 起爆贴。"
+    });
+    expect(events.map((event) => event.type)).toContain("agent_message_appended");
+    expect(heartbeat).toContain("loop-1");
   });
 });

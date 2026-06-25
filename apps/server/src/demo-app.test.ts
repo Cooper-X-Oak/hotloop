@@ -21,8 +21,8 @@ describe("demo server app", () => {
         id: "demo-agent-test",
         workspaceRoot: runtime.contentRoot,
         agentAdapter: "local-cli:codex",
-        adapterPriority: ["local-cli:codex", "api-fallback"],
-        fallbackReason: null,
+        cliAdapterPriority: ["local-cli:codex"],
+        cliUnavailableReason: null,
         loadedHarness: ["AGENTS.md"]
       }),
       headers: { "Content-Type": "application/json" }

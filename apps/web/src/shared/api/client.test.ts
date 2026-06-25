@@ -22,8 +22,8 @@ describe("HotLoop API client", () => {
       id: "agent-1",
       workspaceRoot: "D:/workspace",
       agentAdapter: "local-cli:codex",
-      adapterPriority: ["local-cli:codex", "api-fallback"],
-      fallbackReason: null,
+      cliAdapterPriority: ["local-cli:codex"],
+      cliUnavailableReason: null,
       loadedHarness: ["AGENTS.md"]
     });
     await api.sendAgentMessage("agent-1", {
@@ -37,6 +37,23 @@ describe("HotLoop API client", () => {
       payload: { freshnessWindowHours: 6 }
     });
     await api.runAgentCommandWithLocalCli("agent-1", "cmd-1", {
+      executable: "codex",
+      args: ["exec"],
+      cwd: "D:/workspace"
+    });
+    await api.createAgentLoopRun("agent-1", {
+      id: "loop-1",
+      loopDefinition: "loops/hotspot-writing-loop.yaml",
+      currentStep: "load_harness",
+      currentTask: "准备上下文",
+      progress: {
+        completedSteps: [],
+        activeStep: "load_harness",
+        pendingSteps: ["scan_sources"]
+      }
+    });
+    await api.runAgentLoopTurn("agent-1", "loop-1", {
+      commandId: "cmd-1",
       executable: "codex",
       args: ["exec"],
       cwd: "D:/workspace"
@@ -59,6 +76,8 @@ describe("HotLoop API client", () => {
       { url: "/api/agent/sessions/agent-1/messages", method: "POST" },
       { url: "/api/agent/sessions/agent-1/commands", method: "POST" },
       { url: "/api/agent/sessions/agent-1/commands/cmd-1/local-cli/run", method: "POST" },
+      { url: "/api/agent/sessions/agent-1/loop-runs", method: "POST" },
+      { url: "/api/agent/sessions/agent-1/loop-runs/loop-1/turns", method: "POST" },
       { url: "/api/agent/sessions/agent-1/decisions/decision-1/answer", method: "POST" },
       { url: "/api/feedback/outcomes", method: "POST" }
     ]);

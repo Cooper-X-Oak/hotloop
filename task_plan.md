@@ -4,11 +4,11 @@
 
 Build HotLoop from the current Phase 0 product guardrails into a runnable local-first agent cockpit and toolroom through Phase 21.
 
-Phase 0-8 established the minimal cockpit skeleton. Phase 9-14 should connect the skeleton into a usable local agent operation path without violating the core boundaries: content vault remains external, runs are durable, modules are filesystem-based, browser/source collection is explicit, the agent remains the executor, and publishing remains draft-only.
+Phase 0-8 established the minimal cockpit skeleton. Phase 9-14 connected the skeleton into a usable local agent operation path without violating the core boundaries: content vault remains external, runs are durable, modules are filesystem-based, browser/source collection is explicit, the agent remains the executor, and publishing remains draft-only.
 
 ## Current Phase
 
-All phases through Phase 19 complete for the agent cockpit, durable agent session foundation, Agent Console, and local CLI bridge. Phase 20 is next and should add API fallback only when local CLI execution is unavailable.
+All phases through Phase 19.1 complete for the agent cockpit, durable agent session foundation, Agent Console, local CLI turn adapter, and first durable Agent Loop Runtime. Phase 20 is next and should harden local Codex/Claude CLI adapter configuration and diagnostics without adding provider API execution.
 
 ## Phase Checklist
 
@@ -32,7 +32,8 @@ All phases through Phase 19 complete for the agent cockpit, durable agent sessio
 - [x] Phase 17: Agent runtime contract with sessions, messages, commands, events, decisions, and tool invocation logs
 - [x] Phase 18: Agent Console UI with transcript, command composer, decision queue, and tool timeline
 - [x] Phase 19: Local CLI agent bridge as the primary executor path
-- [ ] Phase 20: API fallback bridge used only when local CLI execution is unavailable
+- [x] Phase 19.1: Durable Agent Loop Runtime with loop runs, turns, output ingestion, heartbeat, and console status monitoring
+- [ ] Phase 20: Local CLI adapter hardening for Codex/Claude CLI availability, selection, diagnostics, and no-provider-API execution behavior
 - [ ] Phase 21: Agent-callable CDP collection tool with silent background browser policy
 
 ## Implementation Strategy
@@ -106,8 +107,9 @@ These commands must exist before implementation is considered complete.
 | Missing demo runtime caused RED test failure | Phase 15 RED | Added `packages/demo`, demo server entry, Vite proxy, and `npm run dev:demo` |
 | Missing routed agent cockpit shell and API client caused RED test failure | Phase 16 RED | Added React Router app shell, feature pages, and shared API client |
 | Missing explicit agent runtime and interaction architecture | Phase 17 design | Added `docs/agent-runtime.md` and updated architecture, state, IA, and roadmap docs |
-| Agent bridge priority was underspecified | Phase 17 correction | Set local CLI bridge as primary path and API bridge as fallback only |
+| Agent bridge priority was underspecified | Phase 17 correction | Set local CLI bridge as the only execution bridge; CLI unavailability is surfaced as configuration/error state, not provider API execution |
 | Missing durable agent session store caused RED test failure | Phase 17 RED | Added `packages/agent` with file-backed sessions, messages, commands, events, decisions, and tool invocations |
 | Missing agent API endpoints caused RED test failure | Phase 17 API RED | Added `/api/agent/sessions` session, message, command, event, and decision endpoints |
 | Missing Agent Console route caused RED test failure | Phase 18 RED | Added `/agent` route, Agent Console UI, and API client methods |
 | Missing local CLI bridge caused RED test failure | Phase 19 RED | Added `nodeLocalCliRunner`, harness checkpoint writing, CLI logs, bridge events, and `/local-cli/run` API |
+| Missing durable loop runtime means agent does not continuously report status | Phase 19.1 design | Added `docs/agent-loop-runtime.md` and promoted local CLI bridge to turn adapter inside a loop runner |

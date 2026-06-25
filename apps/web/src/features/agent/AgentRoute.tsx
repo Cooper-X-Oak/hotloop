@@ -7,12 +7,16 @@ export function AgentRoute({
   agentMessages,
   agentCommands,
   agentDecisions,
+  agentLoopRuns,
+  agentTurns,
   busyAction,
   onSendAgentInstruction,
   onAnswerAgentDecision
 }: FeaturePageProps) {
   const [instruction, setInstruction] = useState("跑一轮近 6h AI 热点，优先 X 起爆贴。");
   const openDecisions = agentDecisions.filter((decision) => decision.status === "open");
+  const activeLoop = agentLoopRuns[0];
+  const latestAgentMessage = [...agentMessages].reverse().find((message) => message.role === "agent");
 
   return (
     <section id="agent" className="view">
@@ -50,28 +54,36 @@ export function AgentRoute({
                 <li key={session.id}>
                   <strong>{session.id}</strong>
                   <span>{session.agentAdapter}</span>
-                  <span>{session.fallbackReason ?? "CLI 优先"}</span>
+                  <span>{session.cliUnavailableReason ?? "本地 CLI 已配置"}</span>
                 </li>
               ))}
             </ul>
           </section>
 
           <section className="focus-box">
-            <h3>Human Decision</h3>
-            {openDecisions.length === 0 ? <p>没有等待人工判断的问题。</p> : null}
-            <ul className="action-list">
-              {openDecisions.map((decision) => (
-                <li key={decision.id}>
-                  <div>
-                    <strong>{decision.question}</strong>
-                    <span>{decision.recommendedAnswer ?? "等待选择"}</span>
-                  </div>
-                  <button onClick={() => onAnswerAgentDecision(decision, decision.options[0] ?? "")}>
-                    采纳建议
-                  </button>
-                </li>
-              ))}
-            </ul>
+            <h3>Current Loop</h3>
+            {!activeLoop ? <p>还没有 loop run。</p> : null}
+            {activeLoop ? (
+              <dl className="metric-grid">
+                <div>
+                  <dt>状态</dt>
+                  <dd>{activeLoop.status}</dd>
+                </div>
+                <div>
+                  <dt>步骤</dt>
+                  <dd>{activeLoop.currentStep}</dd>
+                </div>
+                <div>
+                  <dt>任务</dt>
+                  <dd>{activeLoop.currentTask}</dd>
+                </div>
+                <div>
+                  <dt>心跳</dt>
+                  <dd>{activeLoop.lastHeartbeatAt ?? "未开始"}</dd>
+                </div>
+              </dl>
+            ) : null}
+            {latestAgentMessage ? <p>{latestAgentMessage.content}</p> : null}
           </section>
         </div>
 
@@ -95,6 +107,38 @@ export function AgentRoute({
               {agentCommands.map((command) => (
                 <li key={command.id}>
                   <strong>{command.type}</strong>：{command.status}
+                </li>
+              ))}
+            </ol>
+          </section>
+        </div>
+
+        <div className="split-panel">
+          <section className="focus-box">
+            <h3>Human Decision</h3>
+            {openDecisions.length === 0 ? <p>没有等待人工判断的问题。</p> : null}
+            <ul className="action-list">
+              {openDecisions.map((decision) => (
+                <li key={decision.id}>
+                  <div>
+                    <strong>{decision.question}</strong>
+                    <span>{decision.recommendedAnswer ?? "等待选择"}</span>
+                  </div>
+                  <button onClick={() => onAnswerAgentDecision(decision, decision.options[0] ?? "")}>
+                    采纳建议
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </section>
+
+          <section className="focus-box">
+            <h3>Turn Log</h3>
+            {agentTurns.length === 0 ? <p>暂无 turn。</p> : null}
+            <ol className="activity-log">
+              {agentTurns.map((turn) => (
+                <li key={turn.id}>
+                  <strong>{turn.id}</strong>：{turn.status} / {turn.commandId}
                 </li>
               ))}
             </ol>

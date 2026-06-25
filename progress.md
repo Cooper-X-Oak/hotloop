@@ -109,11 +109,11 @@
 - Designed the missing agent interaction architecture:
   - added explicit Agent Runtime Boundary
   - defined sessions, messages, commands, events, decisions, tool invocations, and harness checkpoints
-  - extended roadmap/task plan through Phase 21 for agent runtime, Agent Console, local CLI bridge, API fallback bridge, and CDP tool integration
+  - extended roadmap/task plan through Phase 21 for agent runtime, Agent Console, local CLI bridge, local CLI hardening, and CDP tool integration
 - Corrected bridge priority:
   - local CLI agent bridge is the primary executor path
-  - API execution is fallback only when CLI is unavailable
-  - sessions must record adapter selection and fallback reason
+  - API execution is not a fallback path
+  - sessions must record local CLI adapter selection and CLI unavailability diagnostics
 - Completed Phase 17 agent runtime contract foundation:
   - added `packages/agent`
   - added durable file-backed sessions, messages, commands, events, decisions, and tool invocation logs
@@ -131,3 +131,15 @@
   - recorded adapter selection, start, completion, failure, and unavailability events
   - added `/api/agent/sessions/:id/commands/:commandId/local-cli/run`
   - wired `/agent` instruction sending to enqueue a command and dispatch local CLI bridge
+- Corrected the agent execution architecture to CLI-only:
+  - removed `api-fallback` as an adapter concept
+  - renamed session metadata to `cliAdapterPriority` and `cliUnavailableReason`
+  - documented that CLI unavailability is a visible configuration/error state, not provider API execution
+- Completed Phase 19.1 durable Agent Loop Runtime:
+  - added `AgentLoopRun`, `AgentTurn`, and `OutputIngestionResult`
+  - added loop-run storage under `loop-runs/<id>/`
+  - added heartbeat, per-turn context checkpoint, stdout/stderr logs, and ingestion checkpoint
+  - implemented JSONL/plain-text CLI stdout ingestion into transcript, events, decisions, tool invocations, and loop state
+  - added server loop-run and turn APIs
+  - wired `/agent` to create a loop run, execute a local CLI turn, and show current loop state plus turn log
+  - verified `npm run check` with 21 test files and 59 tests

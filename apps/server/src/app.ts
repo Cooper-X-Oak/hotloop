@@ -3,16 +3,21 @@ import {
   answerHumanDecision,
   appendAgentEvent,
   appendAgentMessage,
+  createAgentLoopRun,
   createAgentSession,
   enqueueAgentCommand,
+  getAgentLoopRun,
   getAgentSession,
+  listAgentLoopRuns,
   listAgentCommands,
   listAgentDecisions,
   listAgentEvents,
   listAgentMessages,
   listAgentSessions,
+  listAgentTurns,
   nodeLocalCliRunner,
   openHumanDecision,
+  runAgentLoopTurn,
   runLocalCliAgentCommand,
   type LocalCliRunner
 } from "@hotloop/agent";
@@ -342,6 +347,68 @@ export function createApp(options: CreateAppOptions) {
         }
       ),
       201
+    );
+  });
+
+  app.post("/api/agent/sessions/:id/loop-runs", async (c) => {
+    if (!options.agentSessionsRoot) {
+      return c.json({ error: "agentSessionsRoot is not configured" }, 503);
+    }
+    return c.json(
+      await createAgentLoopRun(options.agentSessionsRoot, c.req.param("id"), await c.req.json()),
+      201
+    );
+  });
+
+  app.get("/api/agent/sessions/:id/loop-runs", async (c) => {
+    if (!options.agentSessionsRoot) {
+      return c.json({ error: "agentSessionsRoot is not configured" }, 503);
+    }
+    return c.json(await listAgentLoopRuns(options.agentSessionsRoot, c.req.param("id")));
+  });
+
+  app.get("/api/agent/sessions/:id/loop-runs/:loopRunId", async (c) => {
+    if (!options.agentSessionsRoot) {
+      return c.json({ error: "agentSessionsRoot is not configured" }, 503);
+    }
+    return c.json(
+      await getAgentLoopRun(
+        options.agentSessionsRoot,
+        c.req.param("id"),
+        c.req.param("loopRunId")
+      )
+    );
+  });
+
+  app.post("/api/agent/sessions/:id/loop-runs/:loopRunId/turns", async (c) => {
+    if (!options.agentSessionsRoot) {
+      return c.json({ error: "agentSessionsRoot is not configured" }, 503);
+    }
+    const input = await c.req.json();
+    const runner = options.localCliRunner ?? nodeLocalCliRunner;
+    return c.json(
+      await runAgentLoopTurn(
+        options.agentSessionsRoot,
+        c.req.param("id"),
+        c.req.param("loopRunId"),
+        input.commandId,
+        {
+          executable: input.executable,
+          args: input.args ?? [],
+          cwd: input.cwd,
+          runner
+        }
+      ),
+      201
+    );
+  });
+
+  app.get("/api/agent/sessions/:id/loop-runs/:loopRunId/turns", async (c) => {
+    if (!options.agentSessionsRoot) {
+      return c.json({ error: "agentSessionsRoot is not configured" }, 503);
+    }
+    return c.json(
+      await listAgentTurns(options.agentSessionsRoot, c.req.param("id"), c.req.param("loopRunId"))
     );
   });
 

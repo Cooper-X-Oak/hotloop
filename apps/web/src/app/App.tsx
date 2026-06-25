@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
-import type { AgentCommand, AgentMessage, AgentSession, HumanDecision } from "@hotloop/agent";
+import type {
+  AgentCommand,
+  AgentLoopRun,
+  AgentMessage,
+  AgentSession,
+  AgentTurn,
+  HumanDecision
+} from "@hotloop/agent";
 import type { Candidate } from "@hotloop/workspace";
 import type { ActiveTopic, ConsoleArtifact, ConsoleFeedback, ConsoleRun } from "../console.js";
 import { AppShell } from "./AppShell.js";
@@ -24,6 +31,8 @@ export interface HotLoopInitialData {
   agentMessages?: AgentMessage[];
   agentCommands?: AgentCommand[];
   agentDecisions?: HumanDecision[];
+  agentLoopRuns?: AgentLoopRun[];
+  agentTurns?: AgentTurn[];
 }
 
 export interface HotLoopAppProps {
@@ -39,7 +48,9 @@ const EMPTY_DATA: HotLoopInitialData = {
   agentSessions: [],
   agentMessages: [],
   agentCommands: [],
-  agentDecisions: []
+  agentDecisions: [],
+  agentLoopRuns: [],
+  agentTurns: []
 };
 
 export function HotLoopApp({ api = createHotLoopApi(), initialData = EMPTY_DATA }: HotLoopAppProps) {
@@ -53,6 +64,10 @@ export function HotLoopApp({ api = createHotLoopApi(), initialData = EMPTY_DATA 
   const [agentDecisions, setAgentDecisions] = useState<HumanDecision[]>(
     initialData.agentDecisions ?? []
   );
+  const [agentLoopRuns, setAgentLoopRuns] = useState<AgentLoopRun[]>(
+    initialData.agentLoopRuns ?? []
+  );
+  const [agentTurns, setAgentTurns] = useState<AgentTurn[]>(initialData.agentTurns ?? []);
   const [activeTopic, setActiveTopic] = useState<ActiveTopic | null>(null);
   const [activityLog, setActivityLog] = useState<string[]>([]);
   const [busyAction, setBusyAction] = useState<string | null>(null);
@@ -76,14 +91,18 @@ export function HotLoopApp({ api = createHotLoopApi(), initialData = EMPTY_DATA 
     setAgentSessions(sessions);
     const activeSessionId = sessionId ?? sessions[0]?.id;
     if (!activeSessionId) return;
-    const [messages, commands, decisions] = await Promise.all([
+    const [messages, commands, decisions, loopRuns] = await Promise.all([
       api.getAgentMessages(activeSessionId),
       api.getAgentCommands(activeSessionId),
-      api.getAgentDecisions(activeSessionId)
+      api.getAgentDecisions(activeSessionId),
+      api.getAgentLoopRuns(activeSessionId)
     ]);
     setAgentMessages(messages);
     setAgentCommands(commands);
     setAgentDecisions(decisions);
+    setAgentLoopRuns(loopRuns);
+    const activeLoopRunId = loopRuns[0]?.id;
+    setAgentTurns(activeLoopRunId ? await api.getAgentTurns(activeSessionId, activeLoopRunId) : []);
   }
 
   function log(message: string) {
@@ -150,8 +169,8 @@ export function HotLoopApp({ api = createHotLoopApi(), initialData = EMPTY_DATA 
         id: `agent-${Date.now()}`,
         workspaceRoot: "local-workspace",
         agentAdapter: "local-cli:codex",
-        adapterPriority: ["local-cli:codex", "api-fallback"],
-        fallbackReason: null,
+        cliAdapterPriority: ["local-cli:codex", "local-cli:claude"],
+        cliUnavailableReason: null,
         loadedHarness: ["AGENTS.md", "loops/hotspot-writing-loop.yaml"]
       }));
     await api.sendAgentMessage(session.id, {
@@ -164,16 +183,28 @@ export function HotLoopApp({ api = createHotLoopApi(), initialData = EMPTY_DATA 
       type: "run_loop",
       payload: {
         instruction: trimmed,
-        adapterPreference: "local-cli-first"
+        adapterPreference: "local-cli"
       }
     });
-    const result = await api.runAgentCommandWithLocalCli(session.id, command.id, {
+    const loop = await api.createAgentLoopRun(session.id, {
+      id: `loop-${Date.now()}`,
+      loopDefinition: "loops/hotspot-writing-loop.yaml",
+      currentStep: "load_harness",
+      currentTask: "准备本地 CLI agent 上下文",
+      progress: {
+        completedSteps: [],
+        activeStep: "load_harness",
+        pendingSteps: ["scan_sources", "classify_candidates", "select_topic", "write_article"]
+      }
+    });
+    const result = await api.runAgentLoopTurn(session.id, loop.id, {
+      commandId: command.id,
       executable: "codex",
       args: ["exec"],
       cwd: "."
     });
     log(`已发送给 agent：${trimmed}`);
-    log(`本地 CLI bridge 返回：${result.exitCode ?? "未完成"}`);
+    log(`本地 CLI turn 状态：${result.turn.status}`);
     await refreshAgentSession(session.id);
     setBusyAction(null);
   }
@@ -200,6 +231,8 @@ export function HotLoopApp({ api = createHotLoopApi(), initialData = EMPTY_DATA 
     agentMessages,
     agentCommands,
     agentDecisions,
+    agentLoopRuns,
+    agentTurns,
     activeTopic,
     busyAction,
     onRunScan: runScan,

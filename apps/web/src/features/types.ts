@@ -1,4 +1,11 @@
-import type { AgentCommand, AgentMessage, AgentSession, HumanDecision } from "@hotloop/agent";
+import type {
+  AgentCommand,
+  AgentLoopRun,
+  AgentMessage,
+  AgentSession,
+  AgentTurn,
+  HumanDecision
+} from "@hotloop/agent";
 import type { Candidate } from "@hotloop/workspace";
 import type { ActiveTopic, ConsoleArtifact, ConsoleFeedback, ConsoleRun } from "../console.js";
 
@@ -11,6 +18,8 @@ export interface FeaturePageProps {
   agentMessages: AgentMessage[];
   agentCommands: AgentCommand[];
   agentDecisions: HumanDecision[];
+  agentLoopRuns: AgentLoopRun[];
+  agentTurns: AgentTurn[];
   activeTopic: ActiveTopic | null;
   busyAction: string | null;
   onRunScan: () => void;

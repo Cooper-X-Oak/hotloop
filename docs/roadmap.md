@@ -147,17 +147,18 @@ Deliverables:
 - cancellation boundary
 - bridge tests with a fake process adapter
 
-## Phase 20: API Fallback Bridge
+## Phase 20: Local CLI Adapter Hardening
 
-Goal: provide API fallback only when the local CLI bridge is unavailable.
+Goal: make Codex CLI and Claude CLI bridge selection explicit, diagnosable, and reliable without using provider/model API execution.
 
 Deliverables:
 
-- model/provider API fallback adapter
-- fallback reason recorded in session metadata
-- fallback events visible in the Agent Console
+- Codex CLI and Claude CLI executable configuration
+- CLI availability checks before dispatch
+- `local_cli_unavailable` diagnostics recorded in session metadata/events
+- CLI status visible in the Agent Console
 - same command, decision, event, and tool contracts as the CLI bridge
-- tests proving CLI is tried before API fallback
+- tests proving unavailable CLI is surfaced instead of falling back to API execution
 
 ## Phase 21: CDP Tool Integration
 

@@ -1,4 +1,11 @@
-import type { AgentCommand, AgentMessage, AgentSession, HumanDecision } from "@hotloop/agent";
+import type {
+  AgentCommand,
+  AgentLoopRun,
+  AgentMessage,
+  AgentSession,
+  AgentTurn,
+  HumanDecision
+} from "@hotloop/agent";
 import type { Candidate } from "@hotloop/workspace";
 import type { ActiveTopic, ConsoleArtifact, ConsoleFeedback, ConsoleRun } from "../../console.js";
 
@@ -22,14 +29,16 @@ export interface HotLoopApi {
   getAgentMessages: (sessionId: string) => Promise<AgentMessage[]>;
   getAgentCommands: (sessionId: string) => Promise<AgentCommand[]>;
   getAgentDecisions: (sessionId: string) => Promise<HumanDecision[]>;
+  getAgentLoopRuns: (sessionId: string) => Promise<AgentLoopRun[]>;
+  getAgentTurns: (sessionId: string, loopRunId: string) => Promise<AgentTurn[]>;
   runScan: (id: string) => Promise<{ candidates?: Candidate[]; run?: ConsoleRun }>;
   createAgentSession: (input: {
     id: string;
     workspaceRoot: string;
     activeRunId?: string;
     agentAdapter: AgentSession["agentAdapter"];
-    adapterPriority: AgentSession["adapterPriority"];
-    fallbackReason: string | null;
+    cliAdapterPriority: AgentSession["cliAdapterPriority"];
+    cliUnavailableReason: string | null;
     loadedHarness: string[];
   }) => Promise<AgentSession>;
   sendAgentMessage: (
@@ -45,6 +54,18 @@ export interface HotLoopApi {
     commandId: string,
     input: { executable: string; args?: string[]; cwd: string }
   ) => Promise<{ exitCode: number | null; stdoutPath?: string; stderrPath?: string }>;
+  createAgentLoopRun: (
+    sessionId: string,
+    input: Pick<
+      AgentLoopRun,
+      "id" | "loopDefinition" | "currentStep" | "currentTask" | "progress"
+    >
+  ) => Promise<AgentLoopRun>;
+  runAgentLoopTurn: (
+    sessionId: string,
+    loopRunId: string,
+    input: { commandId: string; executable: string; args?: string[]; cwd: string }
+  ) => Promise<{ loop: AgentLoopRun; turn: AgentTurn; ingestionPath: string }>;
   answerAgentDecision: (
     sessionId: string,
     decisionId: string,
@@ -71,6 +92,10 @@ export function createHotLoopApi(fetchImpl: typeof fetch = fetch): HotLoopApi {
       getJson(fetchImpl, `/api/agent/sessions/${sessionId}/commands`, []),
     getAgentDecisions: (sessionId) =>
       getJson(fetchImpl, `/api/agent/sessions/${sessionId}/decisions`, []),
+    getAgentLoopRuns: (sessionId) =>
+      getJson(fetchImpl, `/api/agent/sessions/${sessionId}/loop-runs`, []),
+    getAgentTurns: (sessionId, loopRunId) =>
+      getJson(fetchImpl, `/api/agent/sessions/${sessionId}/loop-runs/${loopRunId}/turns`, []),
     runScan: (id) =>
       postJson(fetchImpl, "/api/loops/hotspot/scan", { id }, { candidates: [] }),
     createAgentSession: (input) =>
@@ -100,6 +125,42 @@ export function createHotLoopApi(fetchImpl: typeof fetch = fetch): HotLoopApi {
         input,
         { exitCode: null }
       ),
+    createAgentLoopRun: (sessionId, input) =>
+      postJson(fetchImpl, `/api/agent/sessions/${sessionId}/loop-runs`, input, {
+        ...input,
+        sessionId,
+        status: "queued",
+        startedAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        lastHeartbeatAt: null
+      }),
+    runAgentLoopTurn: (sessionId, loopRunId, input) =>
+      postJson(fetchImpl, `/api/agent/sessions/${sessionId}/loop-runs/${loopRunId}/turns`, input, {
+        loop: {
+          id: loopRunId,
+          sessionId,
+          loopDefinition: "loops/hotspot-writing-loop.yaml",
+          status: "failed",
+          currentStep: "unknown",
+          currentTask: "本地 CLI turn 未完成",
+          startedAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+          lastHeartbeatAt: null,
+          progress: { completedSteps: [], activeStep: "unknown", pendingSteps: [] }
+        },
+        turn: {
+          id: "turn-unavailable",
+          sessionId,
+          loopRunId,
+          commandId: input.commandId,
+          status: "failed",
+          inputRef: "",
+          stdoutRef: "",
+          stderrRef: "",
+          createdAt: new Date().toISOString()
+        },
+        ingestionPath: ""
+      }),
     answerAgentDecision: (sessionId, decisionId, input) =>
       postJson(fetchImpl, `/api/agent/sessions/${sessionId}/decisions/${decisionId}/answer`, input, {
         id: decisionId,

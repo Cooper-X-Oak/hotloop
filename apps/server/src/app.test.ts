@@ -218,8 +218,8 @@ describe("server API", () => {
         workspaceRoot: "D:/workspace",
         activeRunId: "run-api-1",
         agentAdapter: "local-cli:codex",
-        adapterPriority: ["local-cli:codex", "api-fallback"],
-        fallbackReason: null,
+        cliAdapterPriority: ["local-cli:codex"],
+        cliUnavailableReason: null,
         loadedHarness: ["AGENTS.md"]
       }),
       headers: { "Content-Type": "application/json" }
@@ -320,8 +320,8 @@ describe("server API", () => {
         id: "agent-cli-api",
         workspaceRoot: "D:/workspace",
         agentAdapter: "local-cli:codex",
-        adapterPriority: ["local-cli:codex", "api-fallback"],
-        fallbackReason: null,
+        cliAdapterPriority: ["local-cli:codex"],
+        cliUnavailableReason: null,
         loadedHarness: ["AGENTS.md"]
       }),
       headers: { "Content-Type": "application/json" }
@@ -361,6 +361,111 @@ describe("server API", () => {
     expect(dispatch.stdoutPath).toContain("agent.stdout.log");
     expect(session.status).toBe("succeeded");
     expect(events.map((event: { type: string }) => event.type)).toContain("local_cli_completed");
+  });
+
+  it("exposes durable agent loop run and turn APIs through the local CLI adapter", async () => {
+    const fixture = await createFixtureWorkspace();
+    const agentSessionsRoot = await mkdtemp(path.join(tmpdir(), "hotloop-api-agent-loop-"));
+    const app = createApp({
+      workspaceConfigPath: fixture.configPath,
+      agentSessionsRoot,
+      localCliRunner: async (input) => {
+        expect(input.executable).toBe("codex");
+        expect(input.stdin).toContain("cmd-loop-api");
+        return {
+          exitCode: 0,
+          stdout: [
+            JSON.stringify({ type: "agent_message", content: "我正在扫描 X 起爆贴。" }),
+            JSON.stringify({
+              type: "status",
+              currentStep: "scan_sources",
+              currentTask: "collect_p0_x_posts"
+            })
+          ].join("\n"),
+          stderr: ""
+        };
+      }
+    });
+
+    await app.request("/api/agent/sessions", {
+      method: "POST",
+      body: JSON.stringify({
+        id: "agent-loop-api",
+        workspaceRoot: "D:/workspace",
+        agentAdapter: "local-cli:codex",
+        cliAdapterPriority: ["local-cli:codex"],
+        cliUnavailableReason: null,
+        loadedHarness: ["AGENTS.md", "loops/hotspot-writing-loop.yaml"]
+      }),
+      headers: { "Content-Type": "application/json" }
+    });
+    await app.request("/api/agent/sessions/agent-loop-api/messages", {
+      method: "POST",
+      body: JSON.stringify({
+        id: "msg-loop-api",
+        role: "human",
+        content: "跑近 6h AI 热点。"
+      }),
+      headers: { "Content-Type": "application/json" }
+    });
+    await app.request("/api/agent/sessions/agent-loop-api/commands", {
+      method: "POST",
+      body: JSON.stringify({
+        id: "cmd-loop-api",
+        type: "run_loop",
+        payload: { instruction: "跑近 6h AI 热点。" }
+      }),
+      headers: { "Content-Type": "application/json" }
+    });
+
+    const createLoopResponse = await app.request("/api/agent/sessions/agent-loop-api/loop-runs", {
+      method: "POST",
+      body: JSON.stringify({
+        id: "loop-api-1",
+        loopDefinition: "loops/hotspot-writing-loop.yaml",
+        currentStep: "load_harness",
+        currentTask: "准备上下文",
+        progress: {
+          completedSteps: [],
+          activeStep: "load_harness",
+          pendingSteps: ["scan_sources", "classify_candidates"]
+        }
+      }),
+      headers: { "Content-Type": "application/json" }
+    });
+    const turnResponse = await app.request(
+      "/api/agent/sessions/agent-loop-api/loop-runs/loop-api-1/turns",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          commandId: "cmd-loop-api",
+          executable: "codex",
+          args: ["exec"],
+          cwd: "D:/workspace"
+        }),
+        headers: { "Content-Type": "application/json" }
+      }
+    );
+    const loopRuns = await (
+      await app.request("/api/agent/sessions/agent-loop-api/loop-runs")
+    ).json();
+    const loop = await (
+      await app.request("/api/agent/sessions/agent-loop-api/loop-runs/loop-api-1")
+    ).json();
+    const turns = await (
+      await app.request("/api/agent/sessions/agent-loop-api/loop-runs/loop-api-1/turns")
+    ).json();
+    const messages = await (
+      await app.request("/api/agent/sessions/agent-loop-api/messages")
+    ).json();
+
+    expect(createLoopResponse.status).toBe(201);
+    expect(turnResponse.status).toBe(201);
+    expect(loopRuns.map((item: { id: string }) => item.id)).toEqual(["loop-api-1"]);
+    expect(loop.currentStep).toBe("scan_sources");
+    expect(loop.currentTask).toBe("collect_p0_x_posts");
+    expect(turns).toHaveLength(1);
+    expect(messages.at(-1)).toMatchObject({ role: "agent", content: "我正在扫描 X 起爆贴。" });
   });
 
   it("exposes phase 9-13 workflow APIs", async () => {

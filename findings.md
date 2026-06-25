@@ -170,7 +170,7 @@
   - harness context checkpoints
 - The `/agent` surface should become the front door for instructing and steering the agent.
 - Existing workflow APIs should remain tool-level capabilities, but real cockpit operation should route through durable agent sessions.
-- Agent execution should bridge into local CLI first. API execution is fallback only and must record fallback reason.
+- Agent execution should bridge into local CLI only. API execution is not a fallback path; CLI unavailability must be recorded as a configuration/error state.
 
 ## Phase 17-18 Implemented State
 
@@ -183,10 +183,10 @@
   - `tool-invocations.jsonl`
   - `checkpoints/`
   - `logs/`
-- Agent sessions record adapter selection metadata:
+- Agent sessions record local CLI selection metadata:
   - `agentAdapter`
-  - `adapterPriority`
-  - `fallbackReason`
+  - `cliAdapterPriority`
+  - `cliUnavailableReason`
 - `apps/server` exposes agent session APIs for:
   - session create/list/get
   - message append/list
@@ -211,11 +211,47 @@
   - stdout/stderr log persistence
   - local CLI lifecycle events
   - session status updates
-- Local CLI unavailability is recorded as `local_cli_unavailable`; it does not silently switch to API fallback.
+- Local CLI unavailability is recorded as `local_cli_unavailable`; it does not silently switch to provider API execution.
 - `apps/server` now exposes:
   - `POST /api/agent/sessions/:id/commands/:commandId/local-cli/run`
 - `apps/server` uses the real local process runner by default and still allows tests/demo to inject a fake runner.
 - `apps/web` sends agent instructions by creating a durable command and then dispatching it through the local CLI bridge.
 - Demo runtime injects a fake local CLI runner, so `/agent` can demonstrate the bridge without spawning a real Codex process.
-- API fallback remains unimplemented and should be Phase 20.
+- Phase 20 should harden local CLI adapters and diagnostics, not add provider API execution.
 - CDP collection remains unimplemented and should be Phase 21.
+
+## Phase 19.1 Implemented State
+
+- HotLoop agent execution is now explicitly CLI-only:
+  - `AgentAdapter` supports local CLI adapters and `manual-agent`
+  - session metadata uses `cliAdapterPriority`
+  - CLI failure diagnostics use `cliUnavailableReason`
+  - `api-fallback`, `adapterPriority`, and `fallbackReason` were removed from code/docs
+- `packages/agent` now has a first durable Agent Loop Runtime:
+  - `AgentLoopRun`
+  - `AgentTurn`
+  - `OutputIngestionResult`
+  - heartbeat file
+  - loop context checkpoints
+  - per-turn stdout/stderr logs
+  - ingestion checkpoints
+- CLI stdout ingestion supports:
+  - plain text -> agent transcript message
+  - JSONL `agent_message` -> transcript message
+  - JSONL `status` -> loop current step/task
+  - JSONL `decision_request` -> human decision queue
+  - JSONL `tool_call` -> queued tool invocation
+  - JSONL `loop_complete` / `loop_failed` -> loop status update
+- `apps/server` now exposes loop run APIs:
+  - `POST /api/agent/sessions/:id/loop-runs`
+  - `GET /api/agent/sessions/:id/loop-runs`
+  - `GET /api/agent/sessions/:id/loop-runs/:loopRunId`
+  - `POST /api/agent/sessions/:id/loop-runs/:loopRunId/turns`
+  - `GET /api/agent/sessions/:id/loop-runs/:loopRunId/turns`
+- `/agent` now sends an instruction by:
+  - appending a human message
+  - enqueueing a durable command
+  - creating an agent loop run
+  - executing one local CLI turn
+  - refreshing transcript, commands, decisions, loop status, and turn log
+- Current verification: `npm run check` passes with 21 test files and 59 tests.

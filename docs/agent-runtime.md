@@ -22,7 +22,9 @@ human intent in cockpit
   -> agent resumes from durable state
 ```
 
-The key requirement is not "add chat". The key requirement is to make the agent loop observable, interruptible, steerable, and resumable.
+The key requirement is not "add chat" and not "run one CLI command". The key requirement is to make the agent loop observable, interruptible, steerable, and resumable.
+
+For the durable loop-runner design, see [Agent Loop Runtime Architecture](agent-loop-runtime.md).
 
 ## Position in the System
 
@@ -46,7 +48,9 @@ Cockpit API
   |
   v
 Agent Runtime Boundary
-  |-- Agent Bridge
+  |-- Agent Loop Runtime
+  |-- Local CLI Turn Adapter
+  |-- Output Ingestion
   |-- Harness Loader
   |-- Tool Registry
   |-- Permission Gate
@@ -55,7 +59,7 @@ Agent Runtime Boundary
   v
 External Agent Executor
   |-- local CLI agent first: Codex / Claude / other local agent CLIs
-  |-- model API fallback only when local CLI is unavailable
+  |-- local CLI availability and configuration diagnostics
   |-- Reads harness and workspace context
   |-- Calls HotLoop tools through local contracts
   |
@@ -82,7 +86,7 @@ HotLoop should expose a boundary that an agent can use, but it should not hide t
 - Load workspace policy, AGENTS files, skills, loop definitions, and module manifests.
 - Start or connect to an external agent process through an adapter.
 - Prefer local CLI agent adapters as the primary execution bridge.
-- Use model/provider API adapters only as fallback when local CLI execution is unavailable.
+- Do not use model/provider API adapters as execution fallback.
 - Expose HotLoop tools through typed local contracts.
 - Let the UI show what the agent is doing and where it is blocked.
 
@@ -183,6 +187,21 @@ render_artifact
 create_platform_draft
 ```
 
+### Agent Loop Run
+
+A durable execution of a loop definition.
+
+```text
+AgentSession
+  -> AgentCommand
+  -> AgentLoopRun
+  -> AgentTurn
+  -> OutputIngestion
+  -> messages/events/decisions/tool invocations
+```
+
+The local CLI bridge is a turn adapter, not the whole runtime.
+
 ### Tool Invocation
 
 Every tool call must be visible and replayable enough for debugging.
@@ -272,6 +291,11 @@ GET  /api/agent/sessions/:id/decisions
 POST /api/agent/sessions/:id/decisions/:decisionId/answer
 POST /api/agent/sessions/:id/cancel
 POST /api/agent/sessions/:id/commands/:commandId/local-cli/run
+POST /api/agent/sessions/:id/loop-runs
+GET  /api/agent/sessions/:id/loop-runs
+GET  /api/agent/sessions/:id/loop-runs/:loopRunId
+POST /api/agent/sessions/:id/loop-runs/:loopRunId/turns
+GET  /api/agent/sessions/:id/loop-runs/:loopRunId/turns
 ```
 
 Streaming can be added after the persisted contract exists:
@@ -290,11 +314,11 @@ The bridge priority is:
 
 ```text
 1. local CLI bridge
-2. model/provider API fallback
+2. another configured local CLI adapter
 3. manual diagnostic bridge for development only
 ```
 
-Local CLI is the product-default path because it preserves the current agent-native workflow: local workspace, local harness, local tools, local browser/CDP access, and visible process logs. API fallback is useful for environments where a CLI is missing or broken, but it should not become the main execution model.
+Local CLI is the execution path because it preserves the current agent-native workflow: local workspace, local harness, local tools, local browser/CDP access, and visible process logs. HotLoop must not call a model/provider API as a fallback executor. When a CLI is missing or broken, the session records that state and the console shows a configuration/error condition.
 
 ```text
 AgentBridge
@@ -318,18 +342,13 @@ claude-cli
   Starts or connects to a Claude CLI process.
   Uses the same session/event/tool contracts.
 
-api-fallback
-  Calls a model/provider API when local CLI execution is unavailable.
-  Must use the same harness-context checkpoint, command queue, event sink, and tool registry.
-  Must be marked as fallback in session metadata.
-
 manual-agent
   Does not spawn a model.
   Lets the current human-agent conversation use HotLoop as a durable tool panel.
   Useful only for development diagnostics and emergency human-operated recovery.
 ```
 
-The first production adapter should be a local CLI bridge. Do not start with an API-first backend agent and do not start by building a complex autonomous daemon.
+The first production adapters should be local CLI bridges for Codex CLI and Claude CLI. Do not start with an API-first backend agent and do not start by building a complex autonomous daemon.
 
 ## Adapter Selection
 
@@ -338,18 +357,18 @@ Agent sessions should record how the executor was selected.
 ```json
 {
   "agentAdapter": "local-cli:codex",
-  "adapterPriority": ["local-cli:codex", "local-cli:claude", "api-fallback"],
-  "fallbackReason": null
+  "cliAdapterPriority": ["local-cli:codex", "local-cli:claude"],
+  "cliUnavailableReason": null
 }
 ```
 
-Fallback example:
+CLI unavailable example:
 
 ```json
 {
-  "agentAdapter": "api-fallback",
-  "adapterPriority": ["local-cli:codex", "local-cli:claude", "api-fallback"],
-  "fallbackReason": "local CLI executable not found"
+  "agentAdapter": "local-cli:codex",
+  "cliAdapterPriority": ["local-cli:codex", "local-cli:claude"],
+  "cliUnavailableReason": "codex executable not found"
 }
 ```
 
@@ -357,9 +376,9 @@ Rules:
 
 - Try the configured local CLI bridge first.
 - If the CLI is unavailable, record the failure as an agent event.
-- Only then select `api-fallback`.
-- Never silently switch from CLI to API without recording `fallbackReason`.
-- The UI must show when a session is using API fallback.
+- Try the next configured local CLI adapter only if the user configured one.
+- Never silently switch from CLI to API.
+- The UI must show when no usable local CLI is available.
 
 ## Harness Loader
 
@@ -561,15 +580,23 @@ Implemented baseline:
 - `runLocalCliAgentCommand` writes `checkpoints/harness-context.json`.
 - stdout and stderr are persisted under `logs/`.
 - the bridge records local CLI lifecycle events.
-- CLI unavailability is recorded and does not silently choose API fallback.
+- CLI unavailability is recorded and does not call a model/provider API executor.
 
-### Phase 20: API Fallback Bridge
+### Phase 19.1: Agent Loop Runtime
 
-- Add a model/provider API fallback adapter.
-- Reuse the same session, command, event, decision, and tool contracts.
-- Record fallback reason in session metadata.
-- Show fallback status in the Agent Console.
-- Keep API fallback behind local CLI selection failure.
+- Add `AgentLoopRun`.
+- Add `AgentTurn`.
+- Add output ingestion.
+- Convert CLI stdout into agent messages and status events.
+- Show current loop status, current step, current task, heartbeat, and latest agent message in `/agent`.
+
+### Phase 20: Local CLI Adapter Hardening
+
+- Add explicit Codex CLI and Claude CLI executable configuration.
+- Detect local CLI availability before dispatch.
+- Record `local_cli_unavailable` with actionable diagnostics.
+- Show local CLI status in the Agent Console.
+- Keep model/provider API execution out of this architecture.
 
 ### Phase 21: CDP Tool Integration
 

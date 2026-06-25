@@ -11,7 +11,7 @@ export type AgentSessionStatus =
   | "failed"
   | "cancelled";
 
-export type AgentAdapter = `local-cli:${string}` | "api-fallback" | "manual-agent";
+export type AgentAdapter = `local-cli:${string}` | "manual-agent";
 
 export interface AgentSession {
   id: string;
@@ -19,8 +19,8 @@ export interface AgentSession {
   workspaceRoot: string;
   activeRunId?: string;
   agentAdapter: AgentAdapter;
-  adapterPriority: AgentAdapter[];
-  fallbackReason: string | null;
+  cliAdapterPriority: AgentAdapter[];
+  cliUnavailableReason: string | null;
   loadedHarness: string[];
   createdAt: string;
   updatedAt: string;
@@ -31,8 +31,8 @@ export interface CreateAgentSessionInput {
   workspaceRoot: string;
   activeRunId?: string;
   agentAdapter: AgentAdapter;
-  adapterPriority: AgentAdapter[];
-  fallbackReason: string | null;
+  cliAdapterPriority: AgentAdapter[];
+  cliUnavailableReason: string | null;
   loadedHarness: string[];
 }
 
@@ -127,6 +127,68 @@ export interface RunLocalCliAgentCommandResult {
   exitCode: number | null;
 }
 
+export type AgentLoopRunStatus =
+  | "queued"
+  | "running"
+  | "waiting_for_user"
+  | "succeeded"
+  | "failed"
+  | "cancelled";
+
+export interface AgentLoopProgress {
+  completedSteps: string[];
+  activeStep: string;
+  pendingSteps: string[];
+}
+
+export interface AgentLoopRun {
+  id: string;
+  sessionId: string;
+  loopDefinition: string;
+  status: AgentLoopRunStatus;
+  currentStep: string;
+  currentTask: string;
+  startedAt: string;
+  updatedAt: string;
+  lastHeartbeatAt: string | null;
+  progress: AgentLoopProgress;
+}
+
+export interface CreateAgentLoopRunInput {
+  id: string;
+  loopDefinition: string;
+  currentStep: string;
+  currentTask: string;
+  progress: AgentLoopProgress;
+}
+
+export interface AgentTurn {
+  id: string;
+  sessionId: string;
+  loopRunId: string;
+  commandId: string;
+  status: "running" | "succeeded" | "failed";
+  inputRef: string;
+  stdoutRef: string;
+  stderrRef: string;
+  createdAt: string;
+  completedAt?: string;
+}
+
+export interface RunAgentLoopTurnResult {
+  loop: AgentLoopRun;
+  turn: AgentTurn;
+  ingestionPath: string;
+}
+
+export interface OutputIngestionResult {
+  messages: AgentMessage[];
+  events: AgentEvent[];
+  decisions: HumanDecision[];
+  toolInvocations: ToolInvocation[];
+  loopUpdate?: Partial<Pick<AgentLoopRun, "status" | "currentStep" | "currentTask">>;
+}
+
 export const nodeLocalCliRunner: LocalCliRunner = async (input) =>
   new Promise((resolve, reject) => {
     const child = spawn(input.executable, input.args, {
@@ -170,6 +232,44 @@ function logPath(sessionsRoot: string, sessionId: string, fileName: string): str
   return path.join(sessionDir(sessionsRoot, sessionId), "logs", fileName);
 }
 
+function loopRunsDir(sessionsRoot: string, sessionId: string): string {
+  return path.join(sessionDir(sessionsRoot, sessionId), "loop-runs");
+}
+
+function loopRunDir(sessionsRoot: string, sessionId: string, loopRunId: string): string {
+  return path.join(loopRunsDir(sessionsRoot, sessionId), loopRunId);
+}
+
+function loopStatePath(sessionsRoot: string, sessionId: string, loopRunId: string): string {
+  return path.join(loopRunDir(sessionsRoot, sessionId, loopRunId), "loop-state.json");
+}
+
+function loopTurnsPath(sessionsRoot: string, sessionId: string, loopRunId: string): string {
+  return path.join(loopRunDir(sessionsRoot, sessionId, loopRunId), "turns.jsonl");
+}
+
+function loopHeartbeatPath(sessionsRoot: string, sessionId: string, loopRunId: string): string {
+  return path.join(loopRunDir(sessionsRoot, sessionId, loopRunId), "heartbeat.json");
+}
+
+function loopCheckpointPath(
+  sessionsRoot: string,
+  sessionId: string,
+  loopRunId: string,
+  fileName: string
+): string {
+  return path.join(loopRunDir(sessionsRoot, sessionId, loopRunId), "checkpoints", fileName);
+}
+
+function loopLogPath(
+  sessionsRoot: string,
+  sessionId: string,
+  loopRunId: string,
+  fileName: string
+): string {
+  return path.join(loopRunDir(sessionsRoot, sessionId, loopRunId), "logs", fileName);
+}
+
 async function writeJson(filePath: string, value: unknown): Promise<void> {
   await writeFile(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
@@ -184,6 +284,15 @@ async function readJsonLines<T>(filePath: string): Promise<T[]> {
     .split("\n")
     .filter((line) => line.trim().length > 0)
     .map((line) => JSON.parse(line) as T);
+}
+
+async function readDirIfExists(dirPath: string) {
+  try {
+    return await readdir(dirPath, { withFileTypes: true });
+  } catch (error) {
+    if (isNotFound(error)) return [];
+    throw error;
+  }
 }
 
 export async function createAgentSession(
@@ -221,7 +330,7 @@ export async function getAgentSession(
 }
 
 export async function listAgentSessions(sessionsRoot: string): Promise<AgentSession[]> {
-  const entries = await readdir(sessionsRoot, { withFileTypes: true });
+  const entries = await readDirIfExists(sessionsRoot);
   const sessions = await Promise.all(
     entries.filter((entry) => entry.isDirectory()).map((entry) => getAgentSession(sessionsRoot, entry.name))
   );
@@ -233,19 +342,27 @@ export async function listAgentSessions(sessionsRoot: string): Promise<AgentSess
   });
 }
 
+async function updateAgentSession(
+  sessionsRoot: string,
+  sessionId: string,
+  update: Partial<Pick<AgentSession, "status" | "cliUnavailableReason">>
+): Promise<AgentSession> {
+  const current = await getAgentSession(sessionsRoot, sessionId);
+  const next: AgentSession = {
+    ...current,
+    ...update,
+    updatedAt: new Date().toISOString()
+  };
+  await writeJson(sessionJsonPath(sessionsRoot, sessionId), next);
+  return next;
+}
+
 export async function updateAgentSessionStatus(
   sessionsRoot: string,
   sessionId: string,
   status: AgentSessionStatus
 ): Promise<AgentSession> {
-  const current = await getAgentSession(sessionsRoot, sessionId);
-  const next: AgentSession = {
-    ...current,
-    status,
-    updatedAt: new Date().toISOString()
-  };
-  await writeJson(sessionJsonPath(sessionsRoot, sessionId), next);
-  return next;
+  return updateAgentSession(sessionsRoot, sessionId, { status });
 }
 
 export async function appendAgentMessage(
@@ -378,6 +495,336 @@ export async function listAgentDecisions(
   return Array.from(new Map(decisions.map((decision) => [decision.id, decision])).values());
 }
 
+export async function createAgentLoopRun(
+  sessionsRoot: string,
+  sessionId: string,
+  input: CreateAgentLoopRunInput
+): Promise<AgentLoopRun> {
+  const now = new Date().toISOString();
+  const dir = loopRunDir(sessionsRoot, sessionId, input.id);
+  await mkdir(path.join(dir, "checkpoints"), { recursive: true });
+  await mkdir(path.join(dir, "logs"), { recursive: true });
+  const loop: AgentLoopRun = {
+    ...input,
+    sessionId,
+    status: "queued",
+    startedAt: now,
+    updatedAt: now,
+    lastHeartbeatAt: null
+  };
+  await writeJson(loopStatePath(sessionsRoot, sessionId, input.id), loop);
+  await writeFile(loopTurnsPath(sessionsRoot, sessionId, input.id), "", "utf8");
+  await writeJson(loopHeartbeatPath(sessionsRoot, sessionId, input.id), {
+    sessionId,
+    loopRunId: input.id,
+    lastHeartbeatAt: null
+  });
+  await appendAgentEvent(sessionsRoot, sessionId, {
+    type: "loop_started",
+    data: { loopRunId: input.id, loopDefinition: input.loopDefinition }
+  });
+  return loop;
+}
+
+export async function getAgentLoopRun(
+  sessionsRoot: string,
+  sessionId: string,
+  loopRunId: string
+): Promise<AgentLoopRun> {
+  const raw = await readFile(loopStatePath(sessionsRoot, sessionId, loopRunId), "utf8");
+  return JSON.parse(raw) as AgentLoopRun;
+}
+
+export async function listAgentLoopRuns(
+  sessionsRoot: string,
+  sessionId: string
+): Promise<AgentLoopRun[]> {
+  const root = loopRunsDir(sessionsRoot, sessionId);
+  const entries = await readDirIfExists(root);
+  const loops = await Promise.all(
+    entries
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => getAgentLoopRun(sessionsRoot, sessionId, entry.name))
+  );
+  return loops.sort((a, b) => b.startedAt.localeCompare(a.startedAt));
+}
+
+async function ingestAgentOutput(
+  sessionsRoot: string,
+  sessionId: string,
+  loopRunId: string,
+  stdout: string
+): Promise<OutputIngestionResult> {
+  const result: OutputIngestionResult = {
+    messages: [],
+    events: [],
+    decisions: [],
+    toolInvocations: []
+  };
+  const lines = stdout
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+
+  if (lines.length === 0) {
+    const event = await appendAgentEvent(sessionsRoot, sessionId, {
+      type: "agent_output_empty",
+      data: { loopRunId }
+    });
+    result.events.push(event);
+    return result;
+  }
+
+  let parsedAny = false;
+  for (const line of lines) {
+    const record = parseJsonRecord(line);
+    if (!record) continue;
+    parsedAny = true;
+
+    if (record.type === "agent_message" && typeof record.content === "string") {
+      const message = await appendAgentMessage(sessionsRoot, sessionId, {
+        id: `msg-agent-${Date.now()}-${result.messages.length}`,
+        role: "agent",
+        content: record.content
+      });
+      const event = await appendAgentEvent(sessionsRoot, sessionId, {
+        type: "agent_message_appended",
+        data: { loopRunId, messageId: message.id }
+      });
+      result.messages.push(message);
+      result.events.push(event);
+      continue;
+    }
+
+    if (record.type === "status") {
+      const loopUpdate: Partial<Pick<AgentLoopRun, "status" | "currentStep" | "currentTask">> = {
+        status: "running"
+      };
+      if (typeof record.currentStep === "string") loopUpdate.currentStep = record.currentStep;
+      if (typeof record.currentTask === "string") loopUpdate.currentTask = record.currentTask;
+      result.loopUpdate = { ...result.loopUpdate, ...loopUpdate };
+      const event = await appendAgentEvent(sessionsRoot, sessionId, {
+        type: "agent_status_reported",
+        data: { loopRunId, ...loopUpdate }
+      });
+      result.events.push(event);
+      continue;
+    }
+
+    if (record.type === "decision_request") {
+      const decision = await openHumanDecision(sessionsRoot, sessionId, {
+        id: typeof record.id === "string" ? record.id : `decision-${Date.now()}`,
+        runId: loopRunId,
+        question: typeof record.question === "string" ? record.question : "Agent requested a decision.",
+        recommendedAnswer:
+          typeof record.recommendedAnswer === "string" ? record.recommendedAnswer : undefined,
+        options: Array.isArray(record.options)
+          ? record.options.filter((option): option is string => typeof option === "string")
+          : []
+      });
+      result.loopUpdate = { ...result.loopUpdate, status: "waiting_for_user" };
+      result.decisions.push(decision);
+      continue;
+    }
+
+    if (record.type === "tool_call" && typeof record.tool === "string") {
+      const invocation = await recordToolInvocation(sessionsRoot, sessionId, {
+        id: typeof record.id === "string" ? record.id : `tool-${Date.now()}`,
+        runId: loopRunId,
+        tool: record.tool,
+        status: "queued",
+        inputRef: typeof record.inputRef === "string" ? record.inputRef : undefined
+      });
+      const event = await appendAgentEvent(sessionsRoot, sessionId, {
+        type: "tool_call_requested",
+        data: { loopRunId, toolInvocationId: invocation.id, tool: invocation.tool }
+      });
+      result.toolInvocations.push(invocation);
+      result.events.push(event);
+      continue;
+    }
+
+    if (record.type === "loop_complete") {
+      result.loopUpdate = { ...result.loopUpdate, status: "succeeded" };
+      const event = await appendAgentEvent(sessionsRoot, sessionId, {
+        type: "loop_complete",
+        data: { loopRunId }
+      });
+      result.events.push(event);
+      continue;
+    }
+
+    if (record.type === "loop_failed") {
+      result.loopUpdate = { ...result.loopUpdate, status: "failed" };
+      const event = await appendAgentEvent(sessionsRoot, sessionId, {
+        type: "loop_failed",
+        message: typeof record.message === "string" ? record.message : undefined,
+        data: { loopRunId, record }
+      });
+      result.events.push(event);
+      continue;
+    }
+
+    const event = await appendAgentEvent(sessionsRoot, sessionId, {
+      type: "agent_output_record",
+      data: { loopRunId, record }
+    });
+    result.events.push(event);
+  }
+
+  if (!parsedAny) {
+    const message = await appendAgentMessage(sessionsRoot, sessionId, {
+      id: `msg-agent-${Date.now()}`,
+      role: "agent",
+      content: stdout.trim()
+    });
+    const event = await appendAgentEvent(sessionsRoot, sessionId, {
+      type: "agent_message_appended",
+      data: { loopRunId, messageId: message.id }
+    });
+    result.messages.push(message);
+    result.events.push(event);
+  }
+
+  return result;
+}
+
+function parseJsonRecord(line: string): (Record<string, unknown> & { type?: string }) | null {
+  try {
+    const value = JSON.parse(line) as unknown;
+    if (typeof value === "object" && value !== null) {
+      return value as Record<string, unknown> & { type?: string };
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+export async function listAgentTurns(
+  sessionsRoot: string,
+  sessionId: string,
+  loopRunId: string
+): Promise<AgentTurn[]> {
+  return readJsonLines(loopTurnsPath(sessionsRoot, sessionId, loopRunId));
+}
+
+async function updateAgentLoopRun(
+  sessionsRoot: string,
+  sessionId: string,
+  loopRunId: string,
+  update: Partial<Pick<AgentLoopRun, "status" | "currentStep" | "currentTask" | "lastHeartbeatAt">>
+): Promise<AgentLoopRun> {
+  const current = await getAgentLoopRun(sessionsRoot, sessionId, loopRunId);
+  const next: AgentLoopRun = {
+    ...current,
+    ...update,
+    progress: {
+      ...current.progress,
+      activeStep: update.currentStep ?? current.progress.activeStep
+    },
+    updatedAt: new Date().toISOString()
+  };
+  await writeJson(loopStatePath(sessionsRoot, sessionId, loopRunId), next);
+  return next;
+}
+
+export async function runAgentLoopTurn(
+  sessionsRoot: string,
+  sessionId: string,
+  loopRunId: string,
+  commandId: string,
+  input: RunLocalCliAgentCommandInput
+): Promise<RunAgentLoopTurnResult> {
+  const session = await getAgentSession(sessionsRoot, sessionId);
+  const loop = await getAgentLoopRun(sessionsRoot, sessionId, loopRunId);
+  const command = (await listAgentCommands(sessionsRoot, sessionId)).find(
+    (item) => item.id === commandId
+  );
+  if (!command) {
+    throw new Error(`Agent command not found: ${commandId}`);
+  }
+
+  const now = new Date().toISOString();
+  const turnId = `turn-${Date.now()}`;
+  const inputRef = loopCheckpointPath(sessionsRoot, sessionId, loopRunId, `${turnId}-context.json`);
+  const ingestionPath = loopCheckpointPath(
+    sessionsRoot,
+    sessionId,
+    loopRunId,
+    `${turnId}-ingestion.json`
+  );
+  const stdoutRef = loopLogPath(sessionsRoot, sessionId, loopRunId, `${turnId}.stdout.log`);
+  const stderrRef = loopLogPath(sessionsRoot, sessionId, loopRunId, `${turnId}.stderr.log`);
+  const heartbeat = {
+    sessionId,
+    loopRunId,
+    lastHeartbeatAt: now,
+    status: "running"
+  };
+  await writeJson(loopHeartbeatPath(sessionsRoot, sessionId, loopRunId), heartbeat);
+  await updateAgentLoopRun(sessionsRoot, sessionId, loopRunId, {
+    status: "running",
+    lastHeartbeatAt: now
+  });
+  await appendAgentEvent(sessionsRoot, sessionId, {
+    type: "heartbeat",
+    data: heartbeat
+  });
+
+  const context = {
+    session,
+    loop,
+    command,
+    messages: await listAgentMessages(sessionsRoot, sessionId)
+  };
+  await writeJson(inputRef, context);
+
+  const runnerResult = await input.runner({
+    executable: input.executable,
+    args: input.args ?? [],
+    cwd: input.cwd,
+    stdin: buildLocalCliPrompt(inputRef, command)
+  });
+  await writeFile(stdoutRef, runnerResult.stdout, "utf8");
+  await writeFile(stderrRef, runnerResult.stderr, "utf8");
+
+  const ingestion = await ingestAgentOutput(sessionsRoot, sessionId, loopRunId, runnerResult.stdout);
+  await writeJson(ingestionPath, ingestion);
+
+  const nextLoop = await updateAgentLoopRun(sessionsRoot, sessionId, loopRunId, {
+    status:
+      runnerResult.exitCode === 0
+        ? ingestion.loopUpdate?.status ?? "running"
+        : "failed",
+    currentStep: ingestion.loopUpdate?.currentStep,
+    currentTask: ingestion.loopUpdate?.currentTask
+  });
+  const turn: AgentTurn = {
+    id: turnId,
+    sessionId,
+    loopRunId,
+    commandId,
+    status: runnerResult.exitCode === 0 ? "succeeded" : "failed",
+    inputRef,
+    stdoutRef,
+    stderrRef,
+    createdAt: now,
+    completedAt: new Date().toISOString()
+  };
+  await appendJsonLine(loopTurnsPath(sessionsRoot, sessionId, loopRunId), turn);
+  await appendAgentEvent(sessionsRoot, sessionId, {
+    type: "agent_turn_completed",
+    data: { loopRunId, turnId, status: turn.status }
+  });
+
+  return {
+    loop: nextLoop,
+    turn,
+    ingestionPath
+  };
+}
+
 export async function runLocalCliAgentCommand(
   sessionsRoot: string,
   sessionId: string,
@@ -403,8 +850,8 @@ export async function runLocalCliAgentCommand(
       executable: input.executable,
       args: input.args ?? [],
       cwd: input.cwd,
-      fallbackAllowed: session.adapterPriority.includes("api-fallback"),
-      fallbackReason: session.fallbackReason
+      cliAdapterPriority: session.cliAdapterPriority,
+      cliUnavailableReason: session.cliUnavailableReason
     }
   };
 
@@ -414,8 +861,8 @@ export async function runLocalCliAgentCommand(
     message: `Using ${session.agentAdapter}`,
     data: {
       adapter: session.agentAdapter,
-      priority: session.adapterPriority,
-      fallbackReason: session.fallbackReason
+      priority: session.cliAdapterPriority,
+      cliUnavailableReason: session.cliUnavailableReason
     }
   });
   await appendAgentEvent(sessionsRoot, sessionId, {
@@ -457,9 +904,13 @@ export async function runLocalCliAgentCommand(
     const message = error instanceof Error ? error.message : String(error);
     await writeFile(stdoutPath, "", "utf8");
     await writeFile(stderrPath, message, "utf8");
-    const nextSession = await updateAgentSessionStatus(sessionsRoot, sessionId, "failed");
+    const missingExecutable = isExecutableMissing(error);
+    const nextSession = await updateAgentSession(sessionsRoot, sessionId, {
+      status: "failed",
+      cliUnavailableReason: missingExecutable ? message : undefined
+    });
     await appendAgentEvent(sessionsRoot, sessionId, {
-      type: isExecutableMissing(error) ? "local_cli_unavailable" : "local_cli_failed",
+      type: missingExecutable ? "local_cli_unavailable" : "local_cli_failed",
       message,
       data: { executable: input.executable, stdoutPath, stderrPath }
     });
@@ -485,5 +936,9 @@ function buildLocalCliPrompt(harnessContextPath: string, command: AgentCommand):
 }
 
 function isExecutableMissing(error: unknown): boolean {
+  return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
+}
+
+function isNotFound(error: unknown): boolean {
   return typeof error === "object" && error !== null && "code" in error && error.code === "ENOENT";
 }
